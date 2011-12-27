@@ -84,6 +84,18 @@ select '<path id="'||iso2||'" d="'|| ST_AsSVG(ST_GeomFromText(ST_AsText(ST_Simpl
 \o
 
 
+# Procedure for making a cartogram:
+## One-off preparation
+psql < grid.sql
 
+## Load the data for this cartogram
+bin/load-data.py data/carbon-reserves.csv
 
-#
+## Generate the starting density grid
+bin/density-grid.py > data/carbon-reserve-density.txt
+
+## Run cart to generate the grid distortion
+cart 500 250 data/carbon-reserve-density.txt data/carbon-reserve-cartogram.txt
+
+## Generate the map
+bin/as-svg.py data/carbon-reserve-cartogram.txt > maps/carbon-reserves.anim.no-data-marked.svg
