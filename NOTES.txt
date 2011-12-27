@@ -38,9 +38,13 @@ select ST_AsSVG(ST_Transform(the_geom,954030), 0, 1) from "tm_world_borders-0" w
 
 
 # The outline of the whole Robinson map (on the lhs)
-select st_astext(ST_Transform(ST_Segmentize(ST_GeomFromText('LINESTRING(-180 -90,-180 90)', 4326), 1), 954030));
+select ST_AsText(ST_Transform(ST_Segmentize(ST_GeomFromText('LINESTRING(-180 -90,-180 90)', 4326), 1), 954030));
 # so incidentally the bounding rectangle is
 #   -17005833.3305252 -8625154.47184994,17005833.3305252 8625154.47184994
+
+# The whole boundary all around:
+select ST_AsSVG(ST_Transform(ST_Segmentize(ST_GeomFromText('POLYGON((-180 -90,-180 90,180 90,180 -90,-180 -90))', 4326), 5), 954030));
+
 
 # Here’s a nice World Robinson map in SVG format:
 # http://upload.wikimedia.org/wikipedia/commons/0/03/BlankMap-World6.svg
@@ -83,35 +87,3 @@ select '<path id="'||iso2||'" d="'|| ST_AsSVG(ST_GeomFromText(ST_AsText(ST_Simpl
 
 
 #
-import shapely.wkb
-import psycopg2
-
-db = psycopg2.connect("host=localhost")
-c = db.cursor()
-c.execute("""
-  select ST_AsBinary(ST_GeomFromText(ST_AsText(ST_Simplify(ST_Transform(the_geom,954030), 10000))))
-  from "tm_world_borders-0" country
-  where country.iso2 = 'GB'
-""")
-p = shapely.wkb.loads(str(c.fetchone()[0]))
-c.close()
-
-def multipolygon_as_svg(multipolygon, f=None):
-  path_arr = []
-  for g in p.geoms:
-    poly_arr = ["M"]
-    path_arr.append(poly_arr)
-    first = True
-    for x, y in g.exterior.coords:
-      if f:
-        x, y = f(x, y)
-      poly_arr.append("%.5f" % x)
-      poly_arr.append("%.5f" % y)
-      if first:
-        poly_arr.append("L")
-        first = False
-    poly_arr.append("Z")
-  
-  return " ".join(sum(path_arr, []))
-
-multipolygon_as_svg(p)
