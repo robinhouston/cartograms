@@ -99,3 +99,15 @@ cart 1500 750 data/carbon-reserve-density.txt data/carbon-reserve-cartogram.txt
 
 ## Generate the map
 bin/as-svg.py data/carbon-reserve-cartogram.txt > maps/carbon-reserves.anim.no-data-marked.svg
+
+
+
+
+
+# Upload an SVG file to S3
+gzip -9 maps/carbon-reserves.anim.no-data-marked.svg
+aws put "Content-type: image/svg+xml" "Content-Encoding: gzip" "x-amz-acl:public-read" \
+   s3.boskent.com/cartograms/carbon-reserves.anim.no-data-marked.svg \
+   maps/carbon-reserves.anim.no-data-marked.svg.gz
+
+
