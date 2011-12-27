@@ -1,0 +1,117 @@
+# Install PostGIS
+psql < /usr/local/share/postgis/postgis.sql
+
+# Load the standard SRSs
+psql < /usr/local/share/postgis/spatial_ref_sys.sql
+
+# Add World Robinson as well
+# from http://spatialreference.org/ref/esri/54030/postgis/
+psql <<END
+INSERT into spatial_ref_sys (
+    srid, auth_name, auth_srid,
+    proj4text, srtext
+) values (
+    954030, 'esri', 54030,
+    '+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs ',
+      'PROJCS["World_Robinson",GEOGCS["GCS_WGS_1984",DATUM["WGS_1984",SPHEROID["WGS_1984",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Robinson"],PARAMETER["False_Easting",0],PARAMETER["False_Northing",0],PARAMETER["Central_Meridian",0],UNIT["Meter",1],AUTHORITY["EPSG","54030"]]'
+);
+END
+
+# Load the shape file
+shp2pgsql -W LATIN1 -s 4326 TM_WORLD_BORDERS-0/*.shp | psql
+
+# If you forget the -s 4326, you can fix it up with:
+select UpdateGeometrySRID('tm_world_borders-0', 'the_geom', 4326);
+
+
+
+# Getting the geometry data out again (in the projection of choice, here Robinson)
+\t on
+select ST_AsText(ST_Transform(the_geom,954030)) from "tm_world_borders-0" where iso2='FR';
+select ST_AsSVG(ST_Transform(the_geom,954030)) from "tm_world_borders-0" where iso2='FR';
+
+# To simplify the path
+select ST_AsSVG(ST_Simplify(ST_Transform(the_geom,954030), 10000)) from "tm_world_borders-0" where iso2='FR';
+
+# To round off to 1 decimal place
+select ST_AsSVG(ST_Transform(the_geom,954030), 0, 1) from "tm_world_borders-0" where iso2='FR';
+
+
+# The outline of the whole Robinson map (on the lhs)
+select st_astext(ST_Transform(ST_Segmentize(ST_GeomFromText('LINESTRING(-180 -90,-180 90)', 4326), 1), 954030));
+# so incidentally the bounding rectangle is
+#   -17005833.3305252 -8625154.47184994,17005833.3305252 8625154.47184994
+
+# Here’s a nice World Robinson map in SVG format:
+# http://upload.wikimedia.org/wikipedia/commons/0/03/BlankMap-World6.svg
+
+# Note that PROJ.4 has an error in its implementation of the Robinson projection:
+#  http://osgeo-org.1803224.n2.nabble.com/Robinson-projection-td6445718.html
+
+
+# I’ve just discovered http://polymaps.org/, “A JavaScript library for image- and vector-tiled maps using SVG.”
+
+
+# Interesting bug:
+robin=# select ST_AsSVG(ST_Simplify(ST_Transform(the_geom,954030), 10000)) from "tm_world_borders-0" where iso2='CX';
+ERROR:  invalid memory alloc request size 18446744073709551614
+
+
+# Algorithm for simplifying polygons: Douglas–Peucker algorithm
+# http://www.cs.ubc.ca/~snoeyink/papers/DPsimp.arch
+# as implemented by the PostGIS ST_Simplify and ST_SimplifyPreserveTopology commands
+
+
+
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" height="442.84" width="863.21002" viewBox="82.992 45.607 2528.5721 1428.3294">
+  <defs />
+  <style type="text/css">
+    #GB { fill: red; }
+  </style>
+  <path id="FR" d="…"/>
+</svg>
+
+
+
+# All the countries as paths
+\o |mate -
+select '<path id="'||iso2||'" d="'|| ST_AsSVG(ST_GeomFromText(ST_AsText(ST_Simplify(ST_Transform(the_geom,954030), 10000))), 0, 0) ||'"/>' from "tm_world_borders-0";
+\o
+
+
+
+
+#
+import shapely.wkb
+import psycopg2
+
+db = psycopg2.connect("host=localhost")
+c = db.cursor()
+c.execute("""
+  select ST_AsBinary(ST_GeomFromText(ST_AsText(ST_Simplify(ST_Transform(the_geom,954030), 10000))))
+  from "tm_world_borders-0" country
+  where country.iso2 = 'GB'
+""")
+p = shapely.wkb.loads(str(c.fetchone()[0]))
+c.close()
+
+def multipolygon_as_svg(multipolygon, f=None):
+  path_arr = []
+  for g in p.geoms:
+    poly_arr = ["M"]
+    path_arr.append(poly_arr)
+    first = True
+    for x, y in g.exterior.coords:
+      if f:
+        x, y = f(x, y)
+      poly_arr.append("%.5f" % x)
+      poly_arr.append("%.5f" % y)
+      if first:
+        poly_arr.append("L")
+        first = False
+    poly_arr.append("Z")
+  
+  return " ".join(sum(path_arr, []))
+
+multipolygon_as_svg(p)

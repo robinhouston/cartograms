@@ -1,0 +1,39 @@
+Thanks for you interest in our paper.  I am now a bit embarassed at
+the title that I gave it---to a theoretical computer scientist,
+"speeding up" means "speeding up the worst-case performance."  My
+further tests have indicated that the straightforward implementation
+of the Douglas-Peucker algorithm runs a little bit faster on
+cartographic data (although it has a far slower worst case running
+time).  The fact that it uses trivial data structures probably make it
+the implementation of choice.
+
+I am including an ar archive with C code for our implementation and
+for the straightforward implementation using a stack instead of
+recursion.  The latter is easy enough to implement that you might want
+to take my code (nonrec.c) as a guide and do your own.  This is
+especially true because I have added timing and animation routines to
+mine to create a video for the Video Review of the ACM Computational
+Geometry conference.  If you have a silicon graphics, you can see the
+animation by running  make  and then running  nonrec or hull.  If you
+don't have an SGI, then  make opt  and  nonrec or hull  will be optimized
+versions of the nonrecursive and path hull implementations.
+
+To extract, save after the line as foo and type   ar x foo
+The following files will be created:
+nonrec.c	non-recursive implementation (the most interesting file)
+DP.c		General routines for parsing arguments, random points, etc
+DP.h
+DPhull.c	Path hull implementation
+PH.h
+PH.c
+DPhullfast.c	(somewhat optimized version)
+animate.c	Display routines for SGI animation
+animate.h
+Makefile	compiles hull and nonrec, with or w/o animation
+
+    o                                    Jack
+  _/\_.
+(')>-(`)                          snoeyink@cs.ubc.ca
+
+	Department of Computer Science, University of British Columbia
+	201 - 2366 Main Mall, Vancouver, BC V6T 1Z4  Canada
