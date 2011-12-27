@@ -67,8 +67,13 @@ local_densities = get_local_densities()
 def carbon_reserve_density_at_position(x, y):
   return local_densities[y][x] or global_density
 
+padding = " ".join(["%.5f" % global_density] * X)
 for y in range(Y):
-  print (" ".join(["%.5f"] * X)) % tuple((
+  print padding, padding, padding
+for y in range(Y):
+  print padding, (" ".join(["%.5f"] * X)) % tuple((
     carbon_reserve_density_at_position(x, y) for x in range(X)
-  ))
+  )), padding
+for y in range(Y):
+  print padding, padding, padding
 
