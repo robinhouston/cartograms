@@ -89,10 +89,10 @@ select '<path id="'||iso2||'" d="'|| ST_AsSVG(ST_GeomFromText(ST_AsText(ST_Simpl
 psql < grid.sql
 
 ## Load the data for this cartogram
-bin/load-data.py data/carbon-reserves.csv
+bin/load-data.py "carbon reserves" data/carbon-reserves.csv Code TOTAL
 
 ## Generate the starting density grid
-bin/density-grid.py > data/carbon-reserve-density.txt
+bin/density-grid.py "carbon reserves" > data/carbon-reserve-density.txt
 
 ## Run cart to generate the grid distortion
 cart 1500 750 data/carbon-reserve-density.txt data/carbon-reserve-cartogram.txt

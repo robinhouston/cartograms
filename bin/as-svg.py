@@ -10,6 +10,8 @@ X, Y = 500, 250
 
 db = psycopg2.connect("host=localhost")
 
+dataset_name = sys.argv[1]
+
 def print_robinson_path(f=None):
   c = db.cursor()
   try:
@@ -38,9 +40,14 @@ def print_country_paths(f=None):
     c.execute("""
       select country.iso2
            , ST_AsBinary(ST_Simplify(ST_Transform(the_geom,954030), 10000)) g
-           , exists(select * from carbon_reserves where carbon_reserves.country_gid = country.gid) has_data
+           , exists(
+              select *
+              from data_value
+              join dataset on data_value.dataset_id = dataset.id
+              where dataset.name = %s
+              and data_value.country_gid = country.gid) has_data
       from "tm_world_borders-0" country
-    """)
+    """, (dataset_name,))
 
     for iso2, g, has_data in c.fetchall():
       classes = "has-data" if has_data else "no-data"
@@ -91,7 +98,7 @@ def multipolygon_as_svg(multipolygon, f=None):
 
 
 def main():
-  interpolator = interp.Interpolator(X, Y, sys.argv[1])
+  interpolator = interp.Interpolator(X, Y, sys.argv[2])
   print """<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" height="600" width="1000" viewBox="-17005833.3305252 -8625154.47184994 34011666.6610504 17250308.94369988">
   <defs />

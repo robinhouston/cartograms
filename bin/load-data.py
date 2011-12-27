@@ -7,11 +7,15 @@ import psycopg2
 
 
 """
-create table carbon_reserves (
+create table dataset (
+   id serial primary key,
+   name varchar not null unique
+);
+
+create table data_value (
     country_gid integer not null references "tm_world_borders-0" (gid),
-    oil_carbon numeric(8,1),
-    gas_carbon numeric(8,1),
-    coal_carbon numeric(8,1)
+    dataset_id integer not null references dataset(id),
+    value numeric(8,1)
 );
 """
 
@@ -26,28 +30,40 @@ def each(filename):
     f.close()
 
 db = psycopg2.connect("host=localhost")
-def as_seq(gen):
-    for country in gen:
-        yield (
-            country["Oil carbon"] or 0,
-            country["Gas carbon"] or 0,
-            country["Coal carbon"] or 0, 
-            country["Code"]
-        )
+def as_seq(gen, dataset_id, *cols):
+    for d in gen:
+        yield (dataset_id,) + tuple((
+            d[col] for col in cols
+        ))
+
+dataset_name, csv_filename, country_col, value_col = sys.argv[1:]
+
+c = db.cursor()
+c.execute("""
+    insert into dataset (name) values (%s)
+""", (dataset_name,))
+c.close()
+
+c = db.cursor()
+c.execute("""
+    select currval('dataset_id_seq'::regclass)
+""")
+dataset_id = c.fetchone()[0]
+c.close()
 
 c = db.cursor()
 c.executemany("""
-        insert into carbon_reserves (
+        insert into data_value (
+            dataset_id,
             country_gid,
-            oil_carbon, gas_carbon, coal_carbon
+            value
         ) (
-            select gid,
-                   %s, %s, %s
+            select %s, gid, %s
             from "tm_world_borders-0"
             where iso2 = %s
         )
     """,
-    as_seq(each(sys.argv[1]))
+    as_seq(each(csv_filename), dataset_id, value_col, country_col)
 )
 c.close()
 db.commit()
