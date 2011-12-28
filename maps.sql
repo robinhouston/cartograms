@@ -3,8 +3,8 @@
 -- $ shp2pgsql -W LATIN1 -s 4326 TM_WORLD_BORDERS-0/TM_WORLD_BORDERS-0.3.shp country | psql
 
 insert into division (name) values ('countries');
-insert into region (division_id, name, the_geom) (
-    select currval('division_id_seq'), iso2, the_geom from country
+insert into region (division_id, name, the_geom, area) (
+    select currval('division_id_seq'), iso2, the_geom, ST_Area(the_geom) from country
 );
 
 insert into map (

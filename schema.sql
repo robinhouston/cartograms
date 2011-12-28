@@ -9,10 +9,12 @@ CREATE TABLE region (
   division_id integer not null references division (id),
   name varchar(60) not null,
   unique (division_id, name),
-  unique (id, division_id)
+  unique (id, division_id),
+  area double precision not null
 );
 SELECT AddGeometryColumn('','region','the_geom','4326','MULTIPOLYGON',2);
 CREATE INDEX "region_geom" on region using gist(the_geom);
+ALTER TABLE region add constraint "region_area_ck" CHECK (area = ST_Area(the_geom));
 
 create table map (
   id   serial primary key,
