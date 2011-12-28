@@ -33,16 +33,6 @@ select grid_set_regions('world-robinson', 'countries');
 -- $ shp2pgsql -s 27700 bdline_gb/data/county_region.shp county |psql
 -- $ shp2pgsql -s 27700 district_borough_unitary_region.shp unitary_region |psql
 
--- Combine counties and UTAs into a single table
-CREATE TABLE "county_or_uta" (gid serial PRIMARY KEY,
-"name" varchar(60),
-"area_code" varchar(3)
-);
-SELECT AddGeometryColumn('','county_or_uta','the_geom','27700','MULTIPOLYGON',2);
-INSERT INTO county_or_uta (name, area_code, the_geom) (select name, area_code, the_geom from county);
-INSERT INTO county_or_uta (name, area_code, the_geom) (select name, area_code, the_geom from unitary_region where area_code='UTA');
-
-
 insert into division (name) values ('utas');
 insert into map (
   division_id,
@@ -58,8 +48,14 @@ insert into map (
 
 select populate_grid('os-britain');
 
-insert into region (division_id, name, the_geom) (
-    select currval('division_id_seq'), name, ST_Transform(the_geom, 4326) from county_or_uta
+insert into region (division_id, name, the_geom, area) (
+    select currval('division_id_seq'), name, ST_Transform(the_geom, 4326), ST_Area(ST_Transform(the_geom, 4326))
+    from county
+);
+insert into region (division_id, name, the_geom, area) (
+    select currval('division_id_seq'), name, ST_Transform(the_geom, 4326), ST_Area(ST_Transform(the_geom, 4326))
+    from unitary_region
+    where area_code in ('UTA', 'MTD')
 );
 
 select grid_set_regions('os-britain', 'utas');
