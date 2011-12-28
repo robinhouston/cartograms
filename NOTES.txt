@@ -114,5 +114,19 @@ aws put "Content-type: image/svg+xml" "Content-Encoding: gzip" "x-amz-acl:public
 
 # Making a dataset of the population numbers
 insert into dataset (name) values ('pop2005');
-insert into data_value (                                                                                                      dataset_id, country_gid, value                                                                                                    ) (                                                                                                                                   select currval('dataset_id_seq'::regclass), gid, pop2005                                                                            from "tm_world_borders-0" country                                                                                                 );
+insert into data_value (
+  dataset_id, country_gid, value
+) (
+  select currval('dataset_id_seq'::regclass), gid, pop2005
+  from "tm_world_borders-0" country
+  where country.area > 0
+);
+
+$ bin/density-grid.py pop2005 > data/pop2005.density
+$ cart 1500 750 data/pop2005.density data/pop2005.cart
+$ bin/as-svg.py pop2005 data/pop2005.cart > maps/pop2005.svg
+
+aws put "Content-type: image/svg+xml" "Content-Encoding: gzip" "x-amz-acl:public-read" \
+   s3.boskent.com/cartograms/pop2005.svg \
+   maps/pop2005.svg.gz
 
