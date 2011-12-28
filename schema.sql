@@ -76,7 +76,7 @@ create table data_value (
     constraint "data_value_dataset_fkey" foreign key (dataset_id, division_id) references dataset(id, division_id),
     region_id integer not null,
     constraint "data_value_region_fkey" foreign key (region_id, division_id) references region (id, division_id),
-    value numeric(16,1) not null
+    value numeric(16,10) not null
 );
 
 
