@@ -6,19 +6,6 @@ import sys
 import psycopg2
 
 
-"""
-create table dataset (
-   id serial primary key,
-   name varchar not null unique
-);
-
-create table data_value (
-    country_gid integer not null references country (gid),
-    dataset_id integer not null references dataset(id),
-    value numeric(16,1)
-);
-"""
-
 def each(filename):
     f = open(filename, 'r')
     r = csv.reader(f)
