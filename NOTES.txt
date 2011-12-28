@@ -92,13 +92,13 @@ psql < grid.sql
 bin/load-data.py "carbon reserves" data/carbon-reserves.csv Code TOTAL
 
 ## Generate the starting density grid
-bin/density-grid.py "carbon reserves" > data/carbon-reserve-density.txt
+bin/density-grid.py "carbon reserves" > data/carbon-reserves.density
 
 ## Run cart to generate the grid distortion
-cart 1500 750 data/carbon-reserve-density.txt data/carbon-reserve-cartogram.txt
+cart 1500 750 data/carbon-reserve-density.txt data/carbon-reserves.cart
 
 ## Generate the map
-bin/as-svg.py "carbon reserves" data/carbon-reserve-cartogram.txt > maps/carbon-reserves.anim.no-data-marked.svg
+bin/as-svg.py "carbon reserves" data/carbon-reserves.cart > maps/carbon-reserves.svg
 
 
 
