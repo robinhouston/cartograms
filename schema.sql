@@ -44,6 +44,7 @@ create table grid (
 );
 SELECT AddGeometryColumn('','grid','pt_4326','4326','POINT',2);
 CREATE INDEX "grid_pt_4326" on grid using gist(pt_4326);
+create index "grid_region_id_ix" on grid(region_id);
 
 -- To restore the pt_4326 values if something bad happens to them:
 --
