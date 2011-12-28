@@ -1,2 +1,6 @@
 .DS_Store
 *.pyc
+/work/*.density
+/work/*.cart
+/maps/*.svg
+/maps/*.svg.gz
