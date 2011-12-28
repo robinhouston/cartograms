@@ -17,18 +17,21 @@ def each(filename):
     f.close()
 
 db = psycopg2.connect("host=localhost")
-def as_seq(gen, dataset_id, *cols):
+class Col(str):
+  """A column name, as opposed to a constant string.
+  """
+def as_seq(gen, *cols):
     for d in gen:
-        yield (dataset_id,) + tuple((
-            d[col] for col in cols
+        yield tuple((
+            d[col] if isinstance(col, Col) else col for col in cols
         ))
 
-dataset_name, csv_filename, country_col, value_col = sys.argv[1:]
+dataset_name, csv_filename, division_name, region_col, value_col = sys.argv[1:]
 
 c = db.cursor()
 c.execute("""
-    insert into dataset (name) values (%s)
-""", (dataset_name,))
+    insert into dataset (name, division_id) (select %s, division.id from division where name = %s)
+""", (dataset_name, division_name))
 c.close()
 
 c = db.cursor()
@@ -42,15 +45,17 @@ c = db.cursor()
 c.executemany("""
         insert into data_value (
             dataset_id,
-            country_gid,
+            division_id,
+            region_id,
             value
         ) (
-            select %s, gid, %s
-            from country
-            where iso2 = %s
+            select %s, division.id, region.id, %s
+            from region
+            join division on region.division_id = division.id
+            where division.name = %s and region.name = %s
         )
     """,
-    as_seq(each(csv_filename), dataset_id, value_col, country_col)
+    as_seq(each(csv_filename), dataset_id, Col(value_col), division_name, Col(region_col))
 )
 c.close()
 db.commit()

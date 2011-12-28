@@ -5,13 +5,12 @@ Linear interpolation for cartogram grids.
 import math
 import re
 
-# The raw coordinate system goes from
-# (-XMAX, -YMAX) at the bottom left to (XMAX, YMAX) at top right.
-XMAX, YMAX = 17005833, 8625154
 
 class Interpolator(object):
-  def __init__(self, width, height, grid_filename):
+  def __init__(self, grid_filename, width, height, x_min, y_min, x_max, y_max):
     self.width, self.height = width, height
+    self.x_min, self.y_min, self.x_max, self.y_max = map(float, (x_min, y_min, x_max, y_max))
+    
     self.a = [ [ None for y in range(3*height+1) ] for x in range(3*width+1) ]
     grid_f = open(grid_filename, "r")
     
@@ -28,8 +27,8 @@ class Interpolator(object):
         self.a[x][y] = float(mo.group(1)), float(mo.group(2))
 
   def __call__(self, rx, ry):
-    x = (rx + XMAX) * self.width  / (2 * XMAX) + self.width
-    y = (ry + YMAX) * self.height / (2 * YMAX) + self.height
+    x = (rx - self.x_min) * self.width  / (self.x_max - self.x_min) + self.width
+    y = (ry - self.y_min) * self.height / (self.y_max - self.y_min) + self.height
     if x < 0 or x > 3 * self.width or y < 0 or y > 3 * self.height:
       return rx, ry
     
@@ -47,7 +46,7 @@ class Interpolator(object):
        + dx*dy*self.a[ix+1][iy+1][1]
     
     return (
-      (tx - self.width) * 2 * XMAX / self.width  - XMAX,
-      (ty - self.height) * 2 * YMAX / self.height - YMAX,
+      (tx - self.width)  * (self.x_max - self.x_min) / self.width  + self.x_min,
+      (ty - self.height) * (self.y_max - self.y_min) / self.height + self.y_min,
     )
         

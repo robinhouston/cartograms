@@ -6,11 +6,29 @@ import sys
 
 import interp
 
-X, Y = 500, 250
+#SIMPLIFICATION = 10000
+SIMPLIFICATION = 1000
+
+# STROKE_WIDTH = 20000
+STROKE_WIDTH = 2000
 
 db = psycopg2.connect("host=localhost")
 
 dataset_name = sys.argv[1]
+map_name = sys.argv[2]
+
+c = db.cursor()
+c.execute("""
+  select id, division_id, srid,
+         width, height,
+         x_min, x_max,
+         y_min, y_max
+  from map
+  where name = %s
+""", (map_name,))
+map_id, division_id, srid, width, height, x_min, x_max, y_min, y_max = c.fetchone()
+c.close()
+
 
 def print_robinson_path(f=None):
   c = db.cursor()
@@ -34,20 +52,21 @@ def print_robinson_path(f=None):
          values="{original};{morphed};{morphed};{original};{original}"/>
     </path>""".format(original=original_path, morphed=morphed_path)
 
-def print_country_paths(f=None):
+def print_region_paths(f=None):
   c = db.cursor()
   try:
     c.execute("""
-      select country.iso2
-           , ST_AsBinary(ST_Simplify(ST_Transform(the_geom,954030), 10000)) g
+      select region.name
+           , ST_AsBinary(ST_Simplify(ST_Transform(region.the_geom, %s), %s)) g
            , exists(
               select *
               from data_value
               join dataset on data_value.dataset_id = dataset.id
               where dataset.name = %s
-              and data_value.country_gid = country.gid) has_data
-      from country
-    """, (dataset_name,))
+              and data_value.region_id = region.id) has_data
+      from region
+      where region.division_id = %s
+    """, (srid, SIMPLIFICATION, dataset_name, division_id))
 
     for iso2, g, has_data in c.fetchall():
       classes = "has-data" if has_data else "no-data"
@@ -98,18 +117,18 @@ def multipolygon_as_svg(multipolygon, f=None):
 
 
 def main():
-  interpolator = interp.Interpolator(X, Y, sys.argv[2])
+  interpolator = interp.Interpolator(sys.argv[3], width, height, x_min, y_min, x_max, y_max)
   print """<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" height="600" width="1000" viewBox="-17005833.3305252 -8625154.47184994 34011666.6610504 17250308.94369988">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="%d" height="%d" viewBox="%.5f %.5f %.5f %.5f">
   <defs />
   <style type="text/css">
     svg { background: #eee; }
     #robinson { fill: #9ec7f3; stroke: #999; stroke-width: 40000; }
-    path { fill: #f7d3aa; stroke: #a08070; stroke-width: 20000; }
+    path { fill: #f7d3aa; stroke: #a08070; stroke-width: %d; }
     path.no-data { fill: white; }
-  </style>"""
-  print_robinson_path(interpolator)
-  print_country_paths(interpolator)
+  </style>""" % (width, height, x_min, -y_max, x_max-x_min, y_max-y_min, STROKE_WIDTH)
+  #print_robinson_path(interpolator)
+  print_region_paths(interpolator)
   print "</svg>"
 
 main()

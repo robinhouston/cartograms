@@ -89,10 +89,10 @@ select '<path id="'||iso2||'" d="'|| ST_AsSVG(ST_GeomFromText(ST_AsText(ST_Simpl
 psql < grid.sql
 
 ## Load the data for this cartogram
-bin/load-data.py "carbon reserves" data/carbon-reserves.csv Code TOTAL
+bin/load-data.py "carbon reserves" data/carbon-reserves.csv countries Code TOTAL
 
 ## Generate the starting density grid
-bin/density-grid.py "carbon reserves" > work/carbon-reserves.density
+bin/density-grid.py "carbon reserves" world-robinson 10000 > work/carbon-reserves.density
 
 ## Run cart to generate the grid distortion
 cart 1500 750 work/carbon-reserves.density work/carbon-reserves.cart
@@ -129,4 +129,16 @@ $ bin/as-svg.py pop2005 work/pop2005.cart | gzip -c -9 > maps/pop2005.svg
 aws put "Content-type: image/svg+xml" "Content-Encoding: gzip" "x-amz-acl:public-read" \
    s3.boskent.com/cartograms/pop2005.svg \
    maps/pop2005.svg.gz
+
+
+
+
+$ bin/load-data.py imagine data/imagine.csv utas name weight
+$ bin/density-grid.py imagine os-britain > work/imagine.density
+$ cart 750 1500 work/imagine.density work/imagine.cart
+$ bin/as-svg.py imagine os-britain work/imagine.cart > maps/imagine.svg
+
+aws put "Content-type: image/svg+xml" "Content-Encoding: gzip" "x-amz-acl:public-read" \
+   s3.boskent.com/cartograms/imagine.svg \
+   maps/imagine.svg.gz
 
