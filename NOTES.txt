@@ -18,23 +18,23 @@ INSERT into spatial_ref_sys (
 END
 
 # Load the shape file
-shp2pgsql -W LATIN1 -s 4326 TM_WORLD_BORDERS-0/*.shp | psql
+shp2pgsql -W LATIN1 -s 4326 TM_WORLD_BORDERS-0/TM_WORLD_BORDERS-0.3.shp country | psql
 
 # If you forget the -s 4326, you can fix it up with:
-select UpdateGeometrySRID('tm_world_borders-0', 'the_geom', 4326);
+select UpdateGeometrySRID('country', 'the_geom', 4326);
 
 
 
 # Getting the geometry data out again (in the projection of choice, here Robinson)
 \t on
-select ST_AsText(ST_Transform(the_geom,954030)) from "tm_world_borders-0" where iso2='FR';
-select ST_AsSVG(ST_Transform(the_geom,954030)) from "tm_world_borders-0" where iso2='FR';
+select ST_AsText(ST_Transform(the_geom,954030)) from country where iso2='FR';
+select ST_AsSVG(ST_Transform(the_geom,954030)) from country where iso2='FR';
 
 # To simplify the path
-select ST_AsSVG(ST_Simplify(ST_Transform(the_geom,954030), 10000)) from "tm_world_borders-0" where iso2='FR';
+select ST_AsSVG(ST_Simplify(ST_Transform(the_geom,954030), 10000)) from country where iso2='FR';
 
 # To round off to 1 decimal place
-select ST_AsSVG(ST_Transform(the_geom,954030), 0, 1) from "tm_world_borders-0" where iso2='FR';
+select ST_AsSVG(ST_Transform(the_geom,954030), 0, 1) from country where iso2='FR';
 
 
 # The outline of the whole Robinson map (on the lhs)
@@ -57,7 +57,7 @@ select ST_AsSVG(ST_Transform(ST_Segmentize(ST_GeomFromText('POLYGON((-180 -90,-1
 
 
 # Interesting bug:
-robin=# select ST_AsSVG(ST_Simplify(ST_Transform(the_geom,954030), 10000)) from "tm_world_borders-0" where iso2='CX';
+robin=# select ST_AsSVG(ST_Simplify(ST_Transform(the_geom,954030), 10000)) from country where iso2='CX';
 ERROR:  invalid memory alloc request size 18446744073709551614
 
 
@@ -80,7 +80,7 @@ ERROR:  invalid memory alloc request size 18446744073709551614
 
 # All the countries as paths
 \o |mate -
-select '<path id="'||iso2||'" d="'|| ST_AsSVG(ST_GeomFromText(ST_AsText(ST_Simplify(ST_Transform(the_geom,954030), 10000))), 0, 0) ||'"/>' from "tm_world_borders-0";
+select '<path id="'||iso2||'" d="'|| ST_AsSVG(ST_GeomFromText(ST_AsText(ST_Simplify(ST_Transform(the_geom,954030), 10000))), 0, 0) ||'"/>' from country;
 \o
 
 
@@ -118,7 +118,7 @@ insert into data_value (
   dataset_id, country_gid, value
 ) (
   select currval('dataset_id_seq'::regclass), gid, pop2005
-  from "tm_world_borders-0" country
+  from country
   where country.area > 0
 );
 

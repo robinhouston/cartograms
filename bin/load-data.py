@@ -13,7 +13,7 @@ create table dataset (
 );
 
 create table data_value (
-    country_gid integer not null references "tm_world_borders-0" (gid),
+    country_gid integer not null references country (gid),
     dataset_id integer not null references dataset(id),
     value numeric(16,1)
 );
@@ -59,7 +59,7 @@ c.executemany("""
             value
         ) (
             select %s, gid, %s
-            from "tm_world_borders-0"
+            from country
             where iso2 = %s
         )
     """,

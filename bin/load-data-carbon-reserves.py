@@ -8,7 +8,7 @@ import psycopg2
 
 """
 create table carbon_reserves (
-    country_gid integer not null references "tm_world_borders-0" (gid),
+    country_gid integer not null references country (gid),
     oil_carbon numeric(8,1),
     gas_carbon numeric(8,1),
     coal_carbon numeric(8,1)
@@ -43,7 +43,7 @@ c.executemany("""
         ) (
             select gid,
                    %s, %s, %s
-            from "tm_world_borders-0"
+            from country
             where iso2 = %s
         )
     """,

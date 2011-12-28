@@ -46,7 +46,7 @@ def print_country_paths(f=None):
               join dataset on data_value.dataset_id = dataset.id
               where dataset.name = %s
               and data_value.country_gid = country.gid) has_data
-      from "tm_world_borders-0" country
+      from country
     """, (dataset_name,))
 
     for iso2, g, has_data in c.fetchall():

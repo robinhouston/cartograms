@@ -20,7 +20,7 @@ def country_at_position(x, y):
   c = db.cursor()
   try:
     c.execute("""
-      select gid from "tm_world_borders-0"
+      select gid from country
       where ST_Contains(the_geom, ST_Transform(ST_GeomFromText('POINT(%d %d)', 954030), 4326))
     """ % (x, -y))
     r = c.fetchone()
@@ -33,7 +33,7 @@ def get_global_density():
     try:
         c.execute("""
             select sum(data_value.value) / sum(country.area)
-            from "tm_world_borders-0" country
+            from country
             join data_value on country.gid = data_value.country_gid
             join dataset on data_value.dataset_id = dataset.id
             where dataset.name = %s
@@ -50,7 +50,7 @@ def get_local_densities():
       from grid
       left join data_value using (country_gid)
       left join dataset on data_value.dataset_id = dataset.id
-      left join "tm_world_borders-0" country on grid.country_gid = country.gid
+      left join country on grid.country_gid = country.gid
       where dataset.name is null or dataset.name = %s
       order by y, x
     """, (dataset_name,))

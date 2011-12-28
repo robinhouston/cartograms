@@ -26,7 +26,7 @@
 --      , grid.x
 --      , country.name
 -- from grid
--- left join "tm_world_borders-0" country
+-- left join country
 --     on ST_Contains(country.the_geom, grid.pt_4326)
 -- order by y, x
 -- ;
@@ -66,7 +66,7 @@ create table grid as(
 -- It is slowed down massively by Europe, where there are lots of little
 -- countries.
 
-alter table grid add column country_gid integer references "tm_world_borders-0" (gid);
+alter table grid add column country_gid integer references country (gid);
 
 create or replace function grid_set_countries() returns void as $$
   declare
@@ -76,7 +76,7 @@ create or replace function grid_set_countries() returns void as $$
       raise notice 'Updating grid row y=%', r.i;
       update grid
       set country_gid = country.gid
-      from "tm_world_borders-0" country
+      from country
       where ST_Contains(country.the_geom, grid.pt_4326)
       and grid.y = r.i;
     end loop;
@@ -88,7 +88,7 @@ select grid_set_countries();
 
 select grid.x, grid.y
 from grid
-join "tm_world_borders-0" country
+join country
   on country.gid = grid.country_gid
 where country.iso2 = 'GB';
 
