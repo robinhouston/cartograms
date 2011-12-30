@@ -49,13 +49,18 @@ insert into map (
 select populate_grid('os-britain');
 
 insert into region (division_id, name, the_geom, area) (
-    select currval('division_id_seq'), name, ST_Transform(the_geom, 4326), ST_Area(ST_Transform(the_geom, 4326))
+    select currval('division_id_seq'), code, ST_Transform(the_geom, 4326), ST_Area(ST_Transform(the_geom, 4326))
     from county
 );
 insert into region (division_id, name, the_geom, area) (
-    select currval('division_id_seq'), name, ST_Transform(the_geom, 4326), ST_Area(ST_Transform(the_geom, 4326))
+    select currval('division_id_seq'), code, ST_Transform(the_geom, 4326), ST_Area(ST_Transform(the_geom, 4326))
     from unitary_region
     where area_code in ('UTA', 'MTD')
 );
+update region
+set name = 'E12000007'
+where name = '999999'
+and division_id = (select id from division where name = 'utas');
 
 select grid_set_regions('os-britain', 'utas');
+
