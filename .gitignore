@@ -5,3 +5,6 @@
 /maps/*.svg
 /maps/*.svg.gz
 /maps/*.png
+
+/data/fms.ssv
+/data/imagine.csv
