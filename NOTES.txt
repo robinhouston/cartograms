@@ -132,6 +132,12 @@ aws put "Content-type: image/svg+xml" "Content-Encoding: gzip" "x-amz-acl:public
 
 
 
+\t on
+\a
+\f ,
+\o data/imagine.csv
+select name, area from region where region.division_id = (select id from division where name = 'utas');
+\o
 
 $ bin/load-data.py imagine data/imagine.csv utas name weight
 $ bin/density-grid.py imagine os-britain > work/imagine.density
@@ -142,3 +148,20 @@ aws put "Content-type: image/svg+xml" "Content-Encoding: gzip" "x-amz-acl:public
    s3.boskent.com/cartograms/imagine.svg \
    maps/imagine.svg.gz
 
+
+$ bin/load-data.py ONS-2010-population data/population-by-region.csv utas Code Population
+$ bin/density-grid.py ONS-2010-population os-britain > work/gb-population-2010.density
+$ cart 750 1500 work/gb-population-2010.density work/gb-population-2010.cart
+$ bin/as-svg.py ONS-2010-population os-britain work/gb-population-2010.cart > maps/britain-population.svg
+
+with t as (select ST_Transform(location, 27700) p from fms_problem)
+select '<circle cx="' || round(ST_X(t.p)) || '" cy="'|| round(ST_Y(t.p))||'" r="500"/>' from t;
+
+
+
+$ bin/as-svg.py ONS-2010-population os-britain work/gb-population-2010.cart > maps/fms.svg
+$ vim -s <(echo Gdd:wq) maps/fms.svg
+$ bin/circles.py os-britain work/gb-population-2010.cart >> maps/fms.svg
+$ echo '</svg>' >> maps/fms.svg
+
+$ bin/as-svg.py --dataset=ONS-2010-population --map=os-britain --cart=work/gb-population-2010.cart --circles=fms_problem --static > maps/fms-static-cart.svg
