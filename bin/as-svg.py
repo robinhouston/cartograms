@@ -41,18 +41,27 @@ class AsSVG(object):
   def print_region_paths(self):
     c = self.db.cursor()
     try:
-      c.execute("""
-        select region.name
-             , ST_AsEWKB(ST_Simplify(ST_Transform(region.the_geom, %s), %s)) g
-             , exists(
-                select *
-                from data_value
-                join dataset on data_value.dataset_id = dataset.id
-                where dataset.name = %s
-                and data_value.region_id = region.id) has_data
-        from region
-        where region.division_id = %s
-      """, (self.m.srid, self.options.simplification, self.options.dataset, self.m.division_id))
+      if self.options.dataset:
+        c.execute("""
+          select region.name
+               , ST_AsEWKB(ST_Simplify(ST_Transform(region.the_geom, %s), %s)) g
+               , exists(
+                  select *
+                  from data_value
+                  join dataset on data_value.dataset_id = dataset.id
+                  where dataset.name = %s
+                  and data_value.region_id = region.id) has_data
+          from region
+          where region.division_id = %s
+        """, (self.m.srid, self.options.simplification, self.options.dataset, self.m.division_id))
+      else:
+        c.execute("""
+          select region.name
+               , ST_AsEWKB(ST_Simplify(ST_Transform(region.the_geom, %s), %s)) g
+               , false
+          from region
+          where region.division_id = %s
+        """, (self.m.srid, self.options.simplification, self.m.division_id))
 
       for iso2, g, has_data in c.fetchall():
         classes = "has-data" if has_data else "no-data"
@@ -189,10 +198,9 @@ def main():
   (options, args) = parser.parse_args()
   if args:
     parser.error("Unexpected non-option arguments")
-  if not options.dataset:
-    parser.error("Missing option --dataset")
-  if not options.dataset:
-    parser.error("Missing option --cart")
+  
+  if not options.map:
+    parser.error("Missing option --map")
   
   AsSVG(options=options).print_document()
 
