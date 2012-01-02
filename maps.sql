@@ -43,8 +43,8 @@ insert into map (
 ) values (
   currval('division_id_seq'),
   'os-britain', 27700,
-  5513, 5333.6, 655989, 1220301.5, -- select ST_Extent(the_geom) from county_or_uta;
-  483, 700
+  5500, -1000000, 5500 + 800000, -1000000 + 1035000,
+  541, 700
 );
 
 select populate_grid('os-britain');
