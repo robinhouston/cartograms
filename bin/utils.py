@@ -39,7 +39,7 @@ class Interpolator(object):
           raise Exception("File ended unexpectedly")
         mo = re.match(r"^(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)$", line)
         if not mo:
-          raise Exception("Failed to parse line %d: %s" % (line_number, line))
+          raise Exception("Failed to parse line %d of %s: %s" % (line_number, grid_filename, line))
         self.a[x][y] = float(mo.group(1)), float(mo.group(2))
     
     grid_f.close()
