@@ -142,20 +142,23 @@ class AsSVG(object):
 
   def print_document(self):
     print >>self.out, """<?xml version="1.0" encoding="UTF-8"?>
-  <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="%d" height="%d" viewBox="%.5f %.5f %.5f %.5f">
+  <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="%(width)d" height="%(height)d" viewBox="%(x_min).5f %(minus_y_max).5f %(x_extent).5f %(y_extent).5f">
     <style type="text/css">
       svg { background: #eee; }
       #robinson { fill: #9ec7f3; stroke: #999; stroke-width: 40000; }
-      path { fill: #f7d3aa; stroke: #a08070; stroke-width: %d; }
+      #bounds { fill: #9ec7f3; stroke: #9ec7f3; }
+      path { fill: #f7d3aa; stroke: #a08070; stroke-width: %(stroke_width)d; }
       path.no-data { fill: white; }
-      circle { fill: red; opacity: %f; }
-    </style>""" % (
-      self.m.width, self.m.height,
-      self.m.x_min, -self.m.y_max,
-      self.m.x_max-self.m.x_min, self.m.y_max-self.m.y_min,
-      self.options.stroke_width,
-      self.options.circle_opacity
-    )
+      circle { fill: red; opacity: %(circle_opacity)f; }
+    </style>
+    <path id="bounds" d="M %(x_min).5f %(minus_y_max).5f h %(x_extent).5f v %(y_extent).5f h -%(x_extent).5f Z"/>
+    """ % {
+      "width": self.m.width, "height": self.m.height,
+      "x_min": self.m.x_min, "minus_y_max": -self.m.y_max,
+      "x_extent": self.m.x_max-self.m.x_min, "y_extent": self.m.y_max-self.m.y_min,
+      "stroke_width": self.options.stroke_width,
+      "circle_opacity": self.options.circle_opacity
+    }
     
     if self.options.robinson:
       self.print_robinson_path()
