@@ -1,7 +1,9 @@
 #!/usr/bin/python
 
-import shapely.wkb
 import optparse
+import sys
+
+import shapely.wkb
 import psycopg2
 
 import utils
@@ -15,6 +17,11 @@ class AsSVG(object):
       self.f = utils.Interpolator(options.cart, self.m)
     else:
       self.f = None
+    
+    if options.output:
+      self.out = open(options.output, 'w')
+    else:
+      self.out = sys.stdout
 
   def print_robinson_path(self):
     c = self.db.cursor()
@@ -29,7 +36,7 @@ class AsSVG(object):
   
     p = shapely.wkb.loads(str(path_bin))
     if self.f is None or self.options.static:
-      print '<path id="robinson" d="{path}"/>'.format(path=self.polygon_as_svg(p))
+      print >>self.out, '<path id="robinson" d="{path}"/>'.format(path=self.polygon_as_svg(p))
     else:
       original_path = self.polygon_as_svg(p)
       morphed_path = self.polygon_as_svg(p)
@@ -69,7 +76,7 @@ class AsSVG(object):
         if self.f is None or self.options.static:
           path = self.multipolygon_as_svg(p)
           if path:
-            print '<path id="{iso2}" d="{path}" class="{classes}"/>'.format(iso2=iso2, path=path, classes=classes)
+            print >>self.out, '<path id="{iso2}" d="{path}" class="{classes}"/>'.format(iso2=iso2, path=path, classes=classes)
         else:
           original_path = self.multipolygon_as_svg(p)
           if original_path:
@@ -117,24 +124,24 @@ class AsSVG(object):
     """.format(table_name=self.options.circles), (self.m.srid,) )
     if self.f is None:
       for x, y in c:
-        print '<circle cx="{x:.0f}" cy="{y:.0f}" r="{r}"/>'.format(x=x, y=-y, r=self.options.circle_radius)
+        print >>self.out, '<circle cx="{x:.0f}" cy="{y:.0f}" r="{r}"/>'.format(x=x, y=-y, r=self.options.circle_radius)
     elif self.options.static:
       for x, y in c:
         tx, ty = self.f(x, y)
-        print '<circle cx="{x:.0f}" cy="{y:.0f}" r="{r}"/>'.format(x=tx, y=-ty, r=self.options.circle_radius)
+        print >>self.out, '<circle cx="{x:.0f}" cy="{y:.0f}" r="{r}"/>'.format(x=tx, y=-ty, r=self.options.circle_radius)
     else:
       for x, y in c:
         tx, ty = self.f(x, y)
-        print '<circle cx="{x:.0f}" cy="{y:.0f}" r="{r}">'.format(x=x, y=-y, r=self.options.circle_radius)
-        print '<animate dur="10s" repeatCount="indefinite" attributeName="cx" ' + \
+        print >>self.out, '<circle cx="{x:.0f}" cy="{y:.0f}" r="{r}">'.format(x=x, y=-y, r=self.options.circle_radius)
+        print >>self.out, '<animate dur="10s" repeatCount="indefinite" attributeName="cx" ' + \
                        'values="{x:.0f};{tx:.0f};{tx:.0f};{x:.0f};{x:.0f}"/>'.format(x=x, tx=tx)
-        print '<animate dur="10s" repeatCount="indefinite" attributeName="cy" ' + \
+        print >>self.out, '<animate dur="10s" repeatCount="indefinite" attributeName="cy" ' + \
                        'values="{y:.0f};{ty:.0f};{ty:.0f};{y:.0f};{y:.0f}"/>'.format(y=-y, ty=-ty)
-        print '</circle>'
+        print >>self.out, '</circle>'
     c.close()
 
   def print_document(self):
-    print """<?xml version="1.0" encoding="UTF-8"?>
+    print >>self.out, """<?xml version="1.0" encoding="UTF-8"?>
   <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="%d" height="%d" viewBox="%.5f %.5f %.5f %.5f">
     <style type="text/css">
       svg { background: #eee; }
@@ -156,7 +163,7 @@ class AsSVG(object):
     self.print_region_paths()
     if self.options.circles:
       self.print_circles()
-    print "</svg>"
+    print >>self.out, "</svg>"
 
 def main():
   global options
@@ -173,6 +180,10 @@ def main():
   parser.add_option("", "--cart",
                     action="store",
                     help="the name of the file containing the cartogram grid")
+  
+  parser.add_option("-o", "--output",
+                    action="store",
+                    help="the name of the output file (defaults to stdout)")
   
   parser.add_option("", "--simplification",
                     action="store", default=1000,
