@@ -171,18 +171,15 @@ class AsSVG(object):
 def main():
   global options
   parser = optparse.OptionParser()
-  parser.add_option("", "--robinson",
-                    action="store_true", default=False,
-                    help="include the Robinson map outline")
-  parser.add_option("", "--dataset",
-                    action="store",
-                    help="the name of the dataset")
   parser.add_option("", "--map",
                     action="store",
                     help="the name of the map to use")
   parser.add_option("", "--cart",
                     action="store",
                     help="the name of the file containing the cartogram grid")
+  parser.add_option("", "--dataset",
+                    action="store",
+                    help="the name of the dataset (used to mark which regions have data)")
   
   parser.add_option("-o", "--output",
                     action="store",
@@ -192,9 +189,13 @@ def main():
                     action="store", default=1000,
                     help="how much to simplify the paths (default %default)")
   parser.add_option("", "--stroke-width",
-                    action="store", default=2000,
+                    action="store", default=2000, type="int",
                     help="width of SVG strokes (default %default)")
-  
+
+  parser.add_option("", "--robinson",
+                    action="store_true", default=False,
+                    help="include the Robinson map outline")
+
   parser.add_option("", "--static",
                     action="store_true", default=False,
                     help="Do not animate")
@@ -203,10 +204,10 @@ def main():
                     action="store",
                     help="the name of the table containing data points to plot")
   parser.add_option("", "--circle-radius",
-                    action="store", default=500,
+                    action="store", default=500, type="int",
                     help="radius of circles (default %default)")
   parser.add_option("", "--circle-opacity",
-                    action="store", default=0.5,
+                    action="store", default=0.1, type="float",
                     help="opacity of circles (default %default)")
   
   (options, args) = parser.parse_args()
