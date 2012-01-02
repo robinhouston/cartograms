@@ -40,7 +40,7 @@ class AsSVG(object):
     else:
       original_path = self.polygon_as_svg(p)
       morphed_path = self.polygon_as_svg(p)
-      print """<path id="robinson" d="{original}">
+      print >>self.out, """<path id="robinson" d="{original}">
         <animate dur="10s" repeatCount="indefinite" attributeName="d" 
            values="{original};{morphed};{morphed};{original};{original}"/>
       </path>""".format(original=original_path, morphed=morphed_path)
@@ -81,7 +81,7 @@ class AsSVG(object):
           original_path = self.multipolygon_as_svg(p)
           if original_path:
             morphed_path = self.multipolygon_as_svg(p)
-            print """<path id="{iso2}" d="{original}" class="{classes}">
+            print >>self.out, """<path id="{iso2}" d="{original}" class="{classes}">
               <animate dur="10s" repeatCount="indefinite" attributeName="d" 
                   values="{original};{morphed};{morphed};{original};{original}"/>
             </path>""".format(iso2=iso2, original=original_path, morphed=morphed_path, classes=classes)
