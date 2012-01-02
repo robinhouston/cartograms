@@ -28,10 +28,11 @@ select grid_set_regions('world-robinson', 'countries');
 
 -- Map of Great Britain
 
+-- bdline_gb data downloaded from http://www.ordnancesurvey.co.uk/oswebsite/products/boundary-line/index.html
 
 -- # Loading the county boundaries from the OS
 -- $ shp2pgsql -s 27700 bdline_gb/data/county_region.shp county |psql
--- $ shp2pgsql -s 27700 district_borough_unitary_region.shp unitary_region |psql
+-- $ shp2pgsql -s 27700 bdline_gb/data/district_borough_unitary_region.shp unitary_region |psql
 
 insert into division (name) values ('utas');
 insert into map (
