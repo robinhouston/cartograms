@@ -2,6 +2,7 @@
 
 from __future__ import division
 
+import math
 import optparse
 import sys
 
@@ -12,7 +13,10 @@ import psycopg2
 import utils
 
 FILL_COLOUR = (0xf7 / 0xff, 0xd3 / 0xff, 0xaa / 0xff)
+FILL_COLOUR_NO_DATA = (1, 1, 1)
 STROKE_COLOUR = (0xa0 / 0xff, 0x80 / 0xff, 0x70 / 0xff)
+
+CIRCLE_FILL_COLOUR = (1, 0, 0)
 
 class AsPNG(object):
   def __init__(self, options):
@@ -47,7 +51,7 @@ class AsPNG(object):
         """, {
           "srid": self.m.srid,
           "simplification": self.options.simplification,
-          "datset_name": self.options.dataset,
+          "dataset_name": self.options.dataset,
           "division_id": self.m.division_id
         })
       else:
@@ -63,14 +67,14 @@ class AsPNG(object):
           "division_id": self.m.division_id
         })
       for iso2, g, has_data in c.fetchall():
-        classes = "has-data" if has_data else "no-data"
+        fill_colour = FILL_COLOUR if has_data else FILL_COLOUR_NO_DATA
         p = shapely.wkb.loads(str(g))
-        self.render_multipolygon(p)
+        self.render_multipolygon(p, fill_colour)
           
     finally:
       c.close()
 
-  def render_polygon_ring(self, ring):
+  def render_polygon_ring(self, ring, fill_colour=FILL_COLOUR):
       poly_arr = ["M"]
       first = True
       for x, y in ring.coords:
@@ -84,7 +88,7 @@ class AsPNG(object):
       
       self.c.close_path()
       if FILL_COLOUR:
-        self.c.set_source_rgb(*FILL_COLOUR)
+        self.c.set_source_rgb(*fill_colour)
         if STROKE_COLOUR:
           self.c.fill_preserve()
         else:
@@ -93,19 +97,32 @@ class AsPNG(object):
         self.c.set_source_rgb(*STROKE_COLOUR)
         self.c.stroke()
 
-  def render_polygon(self, polygon):
+  def render_polygon(self, polygon, fill_colour=FILL_COLOUR):
     for ring in polygon.exterior:
-      self.render_polygon_ring(ring)
+      self.render_polygon_ring(ring, fill_colour)
 
-  def render_multipolygon(self, multipolygon):
-    path_arr = []
+  def render_multipolygon(self, multipolygon, fill_colour=FILL_COLOUR):
     for g in multipolygon.geoms:
-      self.render_polygon_ring(g.exterior)
+      self.render_polygon_ring(g.exterior, fill_colour)
       
-      for interior in g.interiors: # XXXX NO
-        self.render_polygon_ring(interior)
+      # XXXX This is not remotely correct, of course
+      for interior in g.interiors:
+        self.render_polygon_ring(interior, fill_colour)
   
-    return " ".join(sum(path_arr, []))
+  def render_circles(self):
+    c = self.db.cursor()
+    c.execute("""
+      with t as (select ST_Transform(location, %s) p from {table_name})
+      select ST_X(t.p), ST_Y(t.p) from t
+    """.format(table_name=self.options.circles), (self.m.srid,) )
+    
+    r,g,b = CIRCLE_FILL_COLOUR
+    self.c.set_source_rgba(r,g,b, self.options.circle_opacity)
+    for x, y in c:
+        self.c.arc(x, y, self.options.circle_radius, 0, 2*math.pi)
+        self.c.fill()
+    c.close()
+
 
   def render_map(self):
     surface = cairo.ImageSurface(cairo.FORMAT_RGB24, self.m.width, self.m.height)
@@ -124,6 +141,8 @@ class AsPNG(object):
     self.c.set_line_width(self.options.stroke_width)
 
     self.render_region_paths()
+    if self.options.circles:
+      self.render_circles()
 
     surface.write_to_png(self.out)
     surface.finish()
