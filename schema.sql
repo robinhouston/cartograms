@@ -80,5 +80,24 @@ create table data_value (
     value numeric(20,10) not null
 );
 
+create table density_grid (
+  map_id      integer not null references map(id),
+  dataset_id  integer not null references dataset(id),
+  x           integer not null,
+  y           integer not null,
+  constraint "density_grid_pk" primary key (map_id, dataset_id, x, y),
+  density     numeric(20,10)
+);
+
+create table transformed_grid (
+  map_id      integer not null references map(id),
+  dataset_id  integer not null references dataset(id),
+  x           integer not null,
+  y           integer not null,
+  constraint "transformed_grid_pk" primary key (map_id, dataset_id, x, y),
+  
+  tx          numeric(10,5) not null,
+  ty          numeric(10,5) not null
+);
 
 
