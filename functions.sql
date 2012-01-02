@@ -9,7 +9,9 @@ begin
           select * from map where name = map_name
       ),
       pregrid as (
-          select xs.x, ys.y
+          select map.id map_id
+               , map.division_id
+               , xs.x, ys.y
                , (map.x_max - map.x_min) * xs.x / map.width  + map.x_min mx
                , (map.y_max - map.y_min) * ys.y / map.height + map.y_min my
                , map.srid
@@ -17,7 +19,7 @@ begin
              , (select generate_series(0, width)  x from map) xs
              , (select generate_series(0, height) y from map) ys
       )
-      select currval('map_id_seq'), currval('division_id_seq')
+      select map_id, division_id
            , x, y
            , ST_Transform(
                ST_SetSRID(
