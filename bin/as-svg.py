@@ -127,7 +127,6 @@ class AsSVG(object):
   def print_document(self):
     print """<?xml version="1.0" encoding="UTF-8"?>
   <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="%d" height="%d" viewBox="%.5f %.5f %.5f %.5f">
-    <defs />
     <style type="text/css">
       svg { background: #eee; }
       #robinson { fill: #9ec7f3; stroke: #999; stroke-width: 40000; }
