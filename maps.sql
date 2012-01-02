@@ -65,3 +65,26 @@ and division_id = (select id from division where name = 'utas');
 
 select grid_set_regions('os-britain', 'utas');
 
+
+
+
+insert into division (name) values ('districts');
+insert into map (
+  division_id,
+  name, srid,
+  x_min, y_min,  x_max, y_max,
+  width, height
+) values (
+  currval('division_id_seq'),
+  'os-britain-districts', 27700,
+  5500, -1000000, 5500 + 800000, -1000000 + 1035000,
+  541, 700
+);
+
+insert into region (division_id, name, the_geom, area) (
+    select currval('division_id_seq'), code, ST_Transform(the_geom, 4326), ST_Area(ST_Transform(the_geom, 4326))
+    from unitary_region
+);
+
+select populate_grid('os-britain-districts')
+     , grid_set_regions('os-britain-districts', 'districts');
