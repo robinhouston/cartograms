@@ -98,7 +98,7 @@ bin/density-grid.py "carbon reserves" world-robinson 10000 > work/carbon-reserve
 cart 1500 750 work/carbon-reserves.density work/carbon-reserves.cart
 
 ## Generate the map
-bin/as-svg.py "carbon reserves" work/carbon-reserves.cart > maps/carbon-reserves.svg
+bin/as-svg.py --dataset "carbon reserves" --cart work/carbon-reserves.cart --map world-robinson > maps/carbon-reserves.svg
 
 
 
@@ -151,17 +151,38 @@ aws put "Content-type: image/svg+xml" "Content-Encoding: gzip" "x-amz-acl:public
 
 $ bin/load-data.py ONS-2010-population data/population-by-region.csv utas Code Population
 $ bin/density-grid.py ONS-2010-population os-britain > work/gb-population-2010.density
-$ cart 750 1500 work/gb-population-2010.density work/gb-population-2010.cart
-$ bin/as-svg.py ONS-2010-population os-britain work/gb-population-2010.cart > maps/britain-population.svg
+$ cart 1449 2100 work/gb-population-2010.density work/gb-population-2010.cart
 
 with t as (select ST_Transform(location, 27700) p from fms_problem)
 select '<circle cx="' || round(ST_X(t.p)) || '" cy="'|| round(ST_Y(t.p))||'" r="500"/>' from t;
 
 
 
-$ bin/as-svg.py ONS-2010-population os-britain work/gb-population-2010.cart > maps/fms.svg
-$ vim -s <(echo Gdd:wq) maps/fms.svg
-$ bin/circles.py os-britain work/gb-population-2010.cart >> maps/fms.svg
-$ echo '</svg>' >> maps/fms.svg
+$ bin/as-svg.py --dataset=ONS-2010-population --map=os-britain --cart=work/gb-population-2010.cart --circles=fms_problem --static --simplification 100 --stroke-width 600 -o maps/fms-reports-static-normalised.svg
 
-$ bin/as-svg.py --dataset=ONS-2010-population --map=os-britain --cart=work/gb-population-2010.cart --circles=fms_problem --static > maps/fms-static-cart.svg
+$ bin/as-svg.py --map=os-britain --circles=fms_problem --static --simplification 100 --stroke-width 600 -o maps/fms-reports-static.svg
+
+$ svgtopng maps/fms-reports-static.svg
+$ svgtopng maps/fms-reports-static-normalised.svg
+
+bin/carter.py --dataset=ONS-2010-population --map=os-britain && \
+bin/as-svg.py --dataset=ONS-2010-population --map=os-britain \
+              --cart=work/gb-population-2010.cart \
+              --circles=fms_problem \
+              --static --simplification 100 --stroke-width 600 \
+              -o maps/fms-reports-static-normalised.svg && \
+svgtopng -f maps/fms-reports-static-normalised.svg
+
+
+aws put "Content-type: image/png" "x-amz-acl:public-read" \
+   s3.boskent.com/cartograms/fixmystreet/reports-cartogram.png  \
+   maps/fms-reports-static-normalised.png
+aws put "Content-type: image/png" "x-amz-acl:public-read" \
+   s3.boskent.com/cartograms/fixmystreet/reports.png  \
+   maps/fms-reports-static.png
+
+
+
+$ bin/load-data.py ONS-2010-population-districts data/population-by-region.csv districts Code Population
+$ bin/density-grid.py ONS-2010-population-districts os-britain-districts > work/gb-population-2010-districts.density && cart 1449 2100 work/gb-population-2010-districts.density work/gb-population-2010-districts.cart
+$ bin/as-svg.py --dataset=ONS-2010-population-districts --map=os-britain-districts --cart=work/gb-population-2010-districts.cart --circles=fms_problem --static --simplification 100 --stroke-width 600 -o maps/fms-reports-districts-normalised.svg && svgtopng -f maps/fms-reports-districts-normalised.svg
