@@ -170,10 +170,6 @@ def main():
   parser.add_option("", "--stroke-width",
                     action="store", default=2000, type="int",
                     help="width of SVG strokes (default %default)")
-
-  parser.add_option("", "--static",
-                    action="store_true", default=False,
-                    help="Do not animate")
   
   parser.add_option("", "--circles",
                     action="store",
