@@ -184,5 +184,15 @@ aws put "Content-type: image/png" "x-amz-acl:public-read" \
 
 
 $ bin/load-data.py ONS-2010-population-districts data/population-by-region.csv districts Code Population
-$ bin/density-grid.py ONS-2010-population-districts os-britain-districts > work/gb-population-2010-districts.density && cart 1449 2100 work/gb-population-2010-districts.density work/gb-population-2010-districts.cart
+$ bin/density-grid.py ONS-2010-population-districts os-britain-districts > work/gb-population-2010-districts.density && cart 1623 2100 work/gb-population-2010-districts.density work/gb-population-2010-districts.cart
 $ bin/as-svg.py --dataset=ONS-2010-population-districts --map=os-britain-districts --cart=work/gb-population-2010-districts.cart --circles=fms_problem --static --simplification 100 --stroke-width 600 -o maps/fms-reports-districts-normalised.svg && svgtopng -f maps/fms-reports-districts-normalised.svg
+
+$ svgtopng maps/fms-reports-districts.svg 
+Robin-Houstons-MacBook-Pro:cartograms robin$ bin/as-svg.py --map=os-britain-districts --circles=fms_problem --static --simplification 100 --stroke-width 600 -o maps/fms-reports-districts.svg && svgtopng maps/fms-reports-districts.svg
+
+aws put "Content-type: image/png" "x-amz-acl:public-read" \
+   s3.boskent.com/cartograms/fixmystreet/dis/reports.png  \
+   maps/fms-reports-districts.png
+aws put "Content-type: image/png" "x-amz-acl:public-read" \
+   s3.boskent.com/cartograms/fixmystreet/dis/reports-cartogram.png  \
+   maps/fms-reports-districts-normalised.png
