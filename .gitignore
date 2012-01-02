@@ -4,3 +4,8 @@
 /work/*.cart
 /maps/*.svg
 /maps/*.svg.gz
+/maps/*.png
+
+/data/fms.ssv
+/data/fms.txt
+/data/imagine.csv

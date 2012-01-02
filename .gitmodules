@@ -1,0 +1,3 @@
+[submodule "svgtopng"]
+	path = svgtopng
+	url = ./svgtopng
