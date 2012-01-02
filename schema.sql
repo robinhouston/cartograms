@@ -37,7 +37,7 @@ create table grid (
   
   x           integer not null,
   y           integer not null,
-  constraint "grid_uq" unique (map_id, x, y),
+  constraint "grid_pk" primary key (map_id, x, y),
   
   region_id   integer null,
   constraint "grid_division_region_fkey" foreign key (region_id, division_id) references region(id, division_id)
