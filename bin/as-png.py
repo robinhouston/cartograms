@@ -24,16 +24,16 @@ class AsPNG(object):
     self.db = psycopg2.connect("host=localhost")
     self.m = utils.Map(self.db, options.map)
     if options.cart:
-      self.f = utils.Interpolator(options.cart, self.m)
+      self.interpolator = utils.Interpolator(options.cart, self.m)
     else:
-      self.f = None
+      self.interpolator = None
     
     if options.output:
-      self.out = open(options.output, 'w')
+      self.out = options.output
     else:
       self.out = sys.stdout
 
-  def render_region_paths(self):
+  def render_region_paths(self, slide):
     c = self.db.cursor()
     try:
       if self.options.dataset:
@@ -69,17 +69,17 @@ class AsPNG(object):
       for iso2, g, has_data in c.fetchall():
         fill_colour = FILL_COLOUR if has_data else FILL_COLOUR_NO_DATA
         p = shapely.wkb.loads(str(g))
-        self.render_multipolygon(p, fill_colour)
+        self.render_multipolygon(p, fill_colour, slide)
           
     finally:
       c.close()
 
-  def render_polygon_ring(self, ring, fill_colour=FILL_COLOUR):
+  def render_polygon_ring(self, ring, fill_colour=FILL_COLOUR, slide=1.0):
       poly_arr = ["M"]
       first = True
       for x, y in ring.coords:
-        if self.f:
-          x, y = self.f(x, y)
+        if self.interpolator:
+          x, y = self.interpolator(x, y, slide)
         if first:
           self.c.move_to(x, y)
           first = False
@@ -97,19 +97,19 @@ class AsPNG(object):
         self.c.set_source_rgb(*STROKE_COLOUR)
         self.c.stroke()
 
-  def render_polygon(self, polygon, fill_colour=FILL_COLOUR):
+  def render_polygon(self, polygon, fill_colour=FILL_COLOUR, slide=1.0):
     for ring in polygon.exterior:
-      self.render_polygon_ring(ring, fill_colour)
+      self.render_polygon_ring(ring, fill_colour, slide)
 
-  def render_multipolygon(self, multipolygon, fill_colour=FILL_COLOUR):
+  def render_multipolygon(self, multipolygon, fill_colour=FILL_COLOUR, slide=1.0):
     for g in multipolygon.geoms:
-      self.render_polygon_ring(g.exterior, fill_colour)
+      self.render_polygon_ring(g.exterior, fill_colour, slide)
       
       # XXXX This is not remotely correct, of course
       for interior in g.interiors:
-        self.render_polygon_ring(interior, fill_colour)
+        self.render_polygon_ring(interior, fill_colour, slide)
   
-  def render_circles(self):
+  def render_circles(self, slide=1.0):
     c = self.db.cursor()
     c.execute("""
       with t as (select ST_Transform(location, %s) p from {table_name})
@@ -119,12 +119,23 @@ class AsPNG(object):
     r,g,b = CIRCLE_FILL_COLOUR
     self.c.set_source_rgba(r,g,b, self.options.circle_opacity)
     for x, y in c:
+        if self.interpolator:
+          x, y = self.interpolator(x, y, slide)
         self.c.arc(x, y, self.options.circle_radius, 0, 2*math.pi)
         self.c.fill()
     c.close()
 
-
+  
   def render_map(self):
+    if self.options.anim_frames:
+      for frame in range(self.options.anim_frames):
+        frame_filename = self.out % (frame,)
+        print "Rendering frame to %s" % (frame_filename,)
+        self.render_frame(frame / (self.options.anim_frames - 1), frame_filename)
+    else:
+      self.render_frame(1.0, self.out)
+  
+  def render_frame(self, slide, output_file):
     surface = cairo.ImageSurface(cairo.FORMAT_RGB24, self.m.width, self.m.height)
     self.c = cairo.Context(surface)
     
@@ -140,11 +151,11 @@ class AsPNG(object):
     ))
     self.c.set_line_width(self.options.stroke_width)
 
-    self.render_region_paths()
+    self.render_region_paths(slide)
     if self.options.circles:
-      self.render_circles()
+      self.render_circles(slide)
 
-    surface.write_to_png(self.out)
+    surface.write_to_png(output_file)
     surface.finish()
 
 def main():
@@ -171,6 +182,10 @@ def main():
                     action="store", default=2000, type="int",
                     help="width of SVG strokes (default %default)")
   
+  parser.add_option("", "--anim-frames",
+                    action="store", default=None, type="int",
+                    help="Number of frames of animation to produce")
+  
   parser.add_option("", "--circles",
                     action="store",
                     help="the name of the table containing data points to plot")
@@ -187,6 +202,16 @@ def main():
   
   if not options.map:
     parser.error("Missing option --map")
+  
+  if options.anim_frames:
+    if not options.cart:
+      parser.error("Animation requires a --cart file")
+    if not options.output:
+      parser.error("Animation requires that you specify an output file template")
+    try:
+      options.output % (0,)
+    except:
+      parser.error("Output filename '%s' does not contain a %%d template" % (options.output,))
   
   AsPNG(options=options).render_map()
 

@@ -44,7 +44,7 @@ class Interpolator(object):
     
     grid_f.close()
 
-  def __call__(self, rx, ry):
+  def __call__(self, rx, ry, slide=1.0):
     x = (rx - self.m.x_min) * self.m.width  / (self.m.x_max - self.m.x_min) + self.m.width
     y = (ry - self.m.y_min) * self.m.height / (self.m.y_max - self.m.y_min) + self.m.height
     if x < 0 or x > 3 * self.m.width or y < 0 or y > 3 * self.m.height:
@@ -63,8 +63,12 @@ class Interpolator(object):
        + (1-dx)*dy*self.a[ix][iy+1][1] \
        + dx*dy*self.a[ix+1][iy+1][1]
     
-    return (
+    ix, iy = (
       (tx - self.m.width)  * (self.m.x_max - self.m.x_min) / self.m.width  + self.m.x_min,
       (ty - self.m.height) * (self.m.y_max - self.m.y_min) / self.m.height + self.m.y_min,
     )
-        
+    
+    return (
+      (1.0 - slide) * rx + slide * ix,
+      (1.0 - slide) * ry + slide * iy,
+    )
