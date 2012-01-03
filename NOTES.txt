@@ -196,3 +196,15 @@ aws put "Content-type: image/png" "x-amz-acl:public-read" \
 aws put "Content-type: image/png" "x-amz-acl:public-read" \
    s3.boskent.com/cartograms/fixmystreet/dis/reports-cartogram.png  \
    maps/fms-reports-districts-normalised.png
+
+
+
+# Making a movie
+bin/as-png.py --map=os-britain --dataset=ONS-2010-population --cart=work/gb-population-2010.cart --circles=fms_problem --simplification 100 --stroke-width 600 --anim-frames=36 -o /tmp/frame-%03d.png
+ffmpeg -f image2 -i /tmp/frame-%03d.png -r 12 -s 541x700 /tmp/fms.avi
+aws put "Content-type: video/avi" "x-amz-acl:public-read" \
+   s3.boskent.com/cartograms/fixmystreet/reports.avi  \
+   /tmp/fms.avi
+aws put "Content-type: image/gif" "x-amz-acl:public-read" \
+   s3.boskent.com/cartograms/fixmystreet/reports-anim.gif  \
+   /tmp/fms.gif
