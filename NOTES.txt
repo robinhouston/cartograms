@@ -205,6 +205,78 @@ ffmpeg -f image2 -i /tmp/frame-%03d.png -r 12 -s 541x700 /tmp/fms.avi
 aws put "Content-type: video/avi" "x-amz-acl:public-read" \
    s3.boskent.com/cartograms/fixmystreet/reports.avi  \
    /tmp/fms.avi
+
+for i in {0..35}
+do
+  f="$(printf "/tmp/frame-%03d.png" $i)"
+  g="$(printf "/tmp/frame-%03d.png" $[71 - $i])"
+  cp $f $g
+done
+
+ffmpeg -f image2 -i /tmp/frame-%03d.png -r 12 -s 541x700 /tmp/fms.gif
+# Increase the delay on the key frames, using a hex editor.
+#   21 f9 04 .. (04 00)   change 04 00 to 64 00
 aws put "Content-type: image/gif" "x-amz-acl:public-read" \
    s3.boskent.com/cartograms/fixmystreet/reports-anim.gif  \
    /tmp/fms.gif
+
+
+
+# And of the finer-grained version
+bin/as-png.py --map=os-britain-districts --dataset=ONS-2010-population-districts \
+              --cart=work/gb-population-2010-districts.cart \
+              --circles=fms_problem \
+              --simplification 100 --stroke-width 600 \
+              --anim-frames=36 -o /tmp/frame-%03d.png
+for i in {0..34}
+do
+  f="$(printf "/tmp/frame-%03d.png" $i)"
+  g="$(printf "/tmp/frame-%03d.png" $[70 - $i])"
+  cp $f $g
+done
+ffmpeg -f image2 -i /tmp/frame-%03d.png -r 12 -s 541x700 /tmp/fms.gif
+# Increase the delay on the key frames, using a hex editor.
+#   21 f9 04 .. (04 00)   change 04 00 to 64 00
+aws put "Content-type: image/gif" "x-amz-acl:public-read" \
+   s3.boskent.com/cartograms/fixmystreet/dis/reports-anim.gif  \
+   /tmp/fms.gif
+
+
+# Or maybe MPEG-4 is more sensible? ;-)
+cat <<CAT > /tmp/fms-anim.html
+<!doctype html>
+<meta charset=utf-8>
+<meta name=viewport content="height=760,width=600">
+<title>All the problems ever reported on FixMyStreet.com</title>
+<body style="width: 600px">
+<video style="margin: auto" autoplay loop controls width=540 height=700 onplay="this.removeAttribute('controls')" onpause="this.controls=true" onended="this.play()">
+  <source src="fms.m4v" type="video/mp4">
+  <source src="fms.ogv" type="video/ogg">
+</video>
+</body>
+CAT
+# A little explanation of some of this:
+#  - Firefox supports Ogg Theora; Safari and iOS support H.264 MPEG-4;
+#    so we need both.
+#  - Firefox does not currently support the loop attribute, so the
+#    onended handler is for her benefit.
+#  - iOS does not support autoplay, so we need controls or else iOS
+#    users have no way to start the video. We remove the controls
+#    when the video has started playing.
+#  - Sometimes iOS will pause the video by itself for no obvious reason,
+#    in which case we must restore the controls, hence the onpause handler.
+aws put "Content-type: text/html" "x-amz-acl:public-read" \
+   s3.boskent.com/cartograms/fixmystreet/dis/reports-anim.html  \
+   /tmp/fms-anim.html
+
+
+ffmpeg -f image2 -i /tmp/frame-%03d.png -r 12 -s 540x700  -vcodec libx264 -crf 21 -acodec aac -ac 2 -ab 192000 -strict experimental -refs 3 -y /tmp/fms.m4v
+aws put "Content-type: video/mp4" "x-amz-acl:public-read" \
+   s3.boskent.com/cartograms/fixmystreet/dis/fms.m4v  \
+   /tmp/fms.m4v
+
+
+ffmpeg -f image2 -i /tmp/frame-%03d.png -r 12 -s 540x700  -vcodec libtheora -acodec libvorbis -b 1024k -y /tmp/fms.ogv
+aws put "Content-type: video/ogg" "x-amz-acl:public-read" \
+   s3.boskent.com/cartograms/fixmystreet/dis/fms.ogv  \
+   /tmp/fms.ogv
