@@ -36,10 +36,10 @@ class AsSVG(object):
   
     p = shapely.wkb.loads(str(path_bin))
     if self.f is None or self.options.static:
-      print >>self.out, '<path id="robinson" d="{path}"/>'.format(path=self.polygon_as_svg(p))
+      print >>self.out, '<path id="robinson" d="{path}"/>'.format(path=self.polygon_as_svg(p, self.f))
     else:
       original_path = self.polygon_as_svg(p)
-      morphed_path = self.polygon_as_svg(p)
+      morphed_path = self.polygon_as_svg(p, self.f)
       print >>self.out, """<path id="robinson" d="{original}">
         <animate dur="10s" repeatCount="indefinite" attributeName="d" 
            values="{original};{morphed};{morphed};{original};{original}"/>
@@ -74,13 +74,13 @@ class AsSVG(object):
         classes = "has-data" if has_data else "no-data"
         p = shapely.wkb.loads(str(g))
         if self.f is None or self.options.static:
-          path = self.multipolygon_as_svg(p)
+          path = self.multipolygon_as_svg(p, self.f)
           if path:
             print >>self.out, '<path id="{iso2}" d="{path}" class="{classes}"/>'.format(iso2=iso2, path=path, classes=classes)
         else:
           original_path = self.multipolygon_as_svg(p)
           if original_path:
-            morphed_path = self.multipolygon_as_svg(p)
+            morphed_path = self.multipolygon_as_svg(p, self.f)
             print >>self.out, """<path id="{iso2}" d="{original}" class="{classes}">
               <animate dur="10s" repeatCount="indefinite" attributeName="d" 
                   values="{original};{morphed};{morphed};{original};{original}"/>
@@ -89,12 +89,12 @@ class AsSVG(object):
     finally:
       c.close()
 
-  def polygon_ring_as_svg(self, ring):
+  def polygon_ring_as_svg(self, ring, f):
       poly_arr = ["M"]
       first = True
       for x, y in ring.coords:
-        if self.f:
-          x, y = self.f(x, y)
+        if f:
+          x, y = f(x, y)
         poly_arr.append("%.0f" % x)
         poly_arr.append("%.0f" % -y)
         if first:
@@ -104,15 +104,15 @@ class AsSVG(object):
       poly_arr.append("Z")
       return poly_arr
 
-  def polygon_as_svg(self, polygon):
-    return " ".join(self.polygon_ring_as_svg(polygon.exterior))
+  def polygon_as_svg(self, polygon, f=None):
+    return " ".join(self.polygon_ring_as_svg(polygon.exterior, f))
 
-  def multipolygon_as_svg(self, multipolygon):
+  def multipolygon_as_svg(self, multipolygon, f=None):
     path_arr = []
     for g in multipolygon.geoms:
-      path_arr.append(self.polygon_ring_as_svg(g.exterior))
+      path_arr.append(self.polygon_ring_as_svg(g.exterior, f))
       for interior in g.interiors:
-        path_arr.append(self.polygon_ring_as_svg(interior))
+        path_arr.append(self.polygon_ring_as_svg(interior, f))
   
     return " ".join(sum(path_arr, []))
   
