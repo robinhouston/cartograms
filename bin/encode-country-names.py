@@ -64,7 +64,7 @@ class CountryNameEncoder(object):
                 row[1:1] = [code]
                 w.writerow(row)
             else:
-                print >>sys.stderr, "Failed to recognise '{country}'".format(country=country)
+                print >>sys.stderr, "Failed to recognise '{country}': {row}".format(country=country, row=",".join(row))
 
 def main():
     from optparse import OptionParser
