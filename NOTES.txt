@@ -280,3 +280,29 @@ ffmpeg -f image2 -i /tmp/frame-%03d.png -r 12 -s 540x700  -vcodec libtheora -aco
 aws put "Content-type: video/ogg" "x-amz-acl:public-read" \
    s3.boskent.com/cartograms/fixmystreet/dis/fms.ogv  \
    /tmp/fms.ogv
+
+
+
+
+
+
+
+
+
+# CAIT emissions data
+
+bin/load-data.py "CAIT carbon annual total" data/CAIT\ emissions\ data\ with\ country\ codes.csv countries "Country code" "Annual emissions (MtCO2e, 2008, excludes land use)"
+bin/density-grid.py "CAIT carbon annual total" world-robinson > work/cait-annual-total.density && cart 1500 750 work/cait-annual-total.density work/cait-annual-total.cart
+bin/as-svg.py --dataset "CAIT carbon annual total" --cart work/cait-annual-total.cart --map world-robinson --json --simplification 20000 > data/cait-annual-total.json
+
+
+bin/load-data.py "CAIT carbon historical total" data/CAIT\ emissions\ data\ with\ country\ codes.csv countries "Country code" "Historical emissions (MtCO2e, 1850–2008, from energy)"
+bin/density-grid.py "CAIT carbon historical total" world-robinson > work/cait-historical-total.density && cart 1500 750 work/cait-historical-total.density work/cait-historical-total.cart
+bin/as-svg.py --dataset "CAIT carbon historical total" --cart work/cait-historical-total.cart --map world-robinson --json --simplification 20000 > data/cait-historical-total.json
+
+
+
+# World population data
+
+bin/load-data.py "World population (World Bank, 2010)" data/world-bank-population.csv countries "Country code" "Population (2010)"
+
