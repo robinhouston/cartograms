@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import json
 import optparse
 import sys
 
@@ -45,7 +46,7 @@ class AsSVG(object):
            values="{original};{morphed};{morphed};{original};{original}"/>
       </path>""".format(original=original_path, morphed=morphed_path)
 
-  def print_region_paths(self):
+  def region_paths(self):
     c = self.db.cursor()
     try:
       if self.options.dataset:
@@ -69,25 +70,39 @@ class AsSVG(object):
           from region
           where region.division_id = %s
         """, (self.m.srid, self.options.simplification, self.m.division_id))
-
-      for iso2, g, has_data in c.fetchall():
-        classes = "has-data" if has_data else "no-data"
+      
+      for region_name, g, has_data in c.fetchall():
         p = shapely.wkb.loads(str(g))
-        if self.f is None or self.options.static:
-          path = self.multipolygon_as_svg(p, self.f)
-          if path:
-            print >>self.out, '<path id="{iso2}" d="{path}" class="{classes}"/>'.format(iso2=iso2, path=path, classes=classes)
-        else:
-          original_path = self.multipolygon_as_svg(p)
-          if original_path:
-            morphed_path = self.multipolygon_as_svg(p, self.f)
-            print >>self.out, """<path id="{iso2}" d="{original}" class="{classes}">
-              <animate dur="10s" repeatCount="indefinite" attributeName="d" 
-                  values="{original};{morphed};{morphed};{original};{original}"/>
-            </path>""".format(iso2=iso2, original=original_path, morphed=morphed_path, classes=classes)
-          
+        yield region_name, p, has_data
+    
     finally:
       c.close()
+  
+  def print_region_paths(self):
+    for region_name, p, has_data in self.region_paths():
+      region_key = region_name # XXXX only works if the region name is a valid id
+      classes = "has-data" if has_data else "no-data"
+      
+      if self.f is None or self.options.static:
+        path = self.multipolygon_as_svg(p, self.f)
+        if path:
+          print >>self.out, '<path id="{region_key}" d="{path}" class="{classes}"/>'.format(region_key=region_key, path=path, classes=classes)
+      else:
+        original_path = self.multipolygon_as_svg(p)
+        if original_path:
+          morphed_path = self.multipolygon_as_svg(p, self.f)
+          print >>self.out, """<path id="{region_key}" d="{original}" class="{classes}">
+            <animate dur="10s" repeatCount="indefinite" attributeName="d" 
+                values="{original};{morphed};{morphed};{original};{original}"/>
+          </path>""".format(region_key=region_key, original=original_path, morphed=morphed_path, classes=classes)
+  
+  def print_region_paths_json(self):
+    d = {}
+    for region_name, p, has_data in self.region_paths():
+      region_key = region_name # XXXX only works if the region name is a valid id
+      if has_data:
+        d[region_key] = self.multipolygon_as_svg(p, self.f)
+    print >>self.out, json.dumps(d)
 
   def polygon_ring_as_svg(self, ring, f):
       poly_arr = ["M"]
@@ -167,6 +182,9 @@ class AsSVG(object):
     if self.options.circles:
       self.print_circles()
     print >>self.out, "</svg>"
+  
+  def print_json(self):
+    self.print_region_paths_json()
 
 def main():
   global options
@@ -184,6 +202,9 @@ def main():
   parser.add_option("-o", "--output",
                     action="store",
                     help="the name of the output file (defaults to stdout)")
+  parser.add_option("", "--json",
+                    action="store_true",
+                    help="Output in JSON format")
   
   parser.add_option("", "--simplification",
                     action="store", default=1000,
@@ -217,6 +238,20 @@ def main():
   if not options.map:
     parser.error("Missing option --map")
   
-  AsSVG(options=options).print_document()
+  if options.json:
+    if options.static:
+      parser.error("--static doesn't make sense in JSON mode: JSON output is always static")
+    
+    # Not all options are yet supported in JSON output mode
+    if options.circles:
+      parser.error("--circles is not yet supported in JSON output mode")
+    if options.robinson:
+      parser.error("--robinson is not yet supported in JSON output mode")
+  
+  as_svg = AsSVG(options=options)
+  if options.json:
+    as_svg.print_json()
+  else:
+    as_svg.print_document()
 
 main()
