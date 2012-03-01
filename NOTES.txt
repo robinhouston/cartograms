@@ -312,23 +312,4 @@ bin/load-data.py "World population (World Bank, 2010)" data/world-bank-populatio
 
 # carbonmap.org
 
-bin/load-data.py "carbonmap:Area" kiln-data/Maps/With\ alpha-2/Area.csv countries "Alpha-2" "Land area (sq. km)"
-bin/load-data.py "carbonmap:GDP" kiln-data/Maps/With\ alpha-2/GDP.csv countries "Alpha-2" 'GDP, PPP (current international $), 2010'
-bin/load-data.py "carbonmap:Population" kiln-data/Maps/With\ alpha-2/Population.csv countries "Alpha-2" 'Population, total, 2010'
-
-for f in Area GDP Population
-do
-    bin/density-grid.py "carbonmap:$f" world-robinson > kiln-data/Maps/Cartogram\ data/"$f".density && \
-    cart 1500 750 kiln-data/Maps/Cartogram\ data/"$f".density kiln-data/Maps/Cartogram\ data/"$f".cart
-    bin/as-svg.py --dataset "carbonmap:$f" --cart kiln-data/Maps/Cartogram\ data/"$f".cart --map world-robinson --json --simplification 20000 > kiln-data/Maps/Cartogram\ data/$f.json
-done
-
-(
-    echo "// This file is auto-generated. Please do not edit."
-    echo 'var carbonmap_data = {};'
-    for f in Area GDP Population
-    do
-        echo -n "carbonmap_data.$f = "
-        perl -pe 's/$/;/' kiln-data/Maps/Cartogram\ data/"$f".json
-    done
-) > kiln-output/data.js
+# see bin/adhoc/load-carbonmap-data.sh
