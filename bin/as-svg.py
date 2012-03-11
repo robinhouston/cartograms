@@ -100,8 +100,7 @@ class AsSVG(object):
     d = {}
     for region_name, p, has_data in self.region_paths():
       region_key = region_name # XXXX only works if the region name is a valid id
-      if has_data:
-        d[region_key] = self.multipolygon_as_svg(p, self.f)
+      d[region_key] = self.multipolygon_as_svg(p, self.f)
     print >>self.out, json.dumps(d)
 
   def polygon_ring_as_svg(self, ring, f):
