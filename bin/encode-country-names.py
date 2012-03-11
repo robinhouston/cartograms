@@ -51,7 +51,7 @@ class CountryNameEncoder(object):
                 country_name_column_number = header.index(country_name_column)
                 # (If that fails, we get a ValueError)
         
-            header[1:1] = ["Country code"]
+            header[1:1] = ["Alpha-2"]
             w.writerow(header)
         else:
             country_name_column_number = int(country_name_column)
