@@ -36,11 +36,13 @@ finally:
 
 # Load in the country -> continent mapping
 continent_by_country = {}
+name_by_country = {}
 with open("data/continents.csv", 'r') as f:
     r = csv.reader(f)
     r.next() # Skip header line
-    for continent, country in r:
-        continent_by_country[country] = continent
+    for iso2, country_name, continent_name, continent_index in r:
+        continent_by_country[iso2] = continent_name
+        name_by_country[iso2] = country_name
 
 # Load in the data
 data = {}
@@ -62,7 +64,7 @@ finally:
 
 w = csv.writer(sys.stdout)
 w.writerow([
-    "region", "continent"
+    "key", "country_name", "continent"
 ] + dataset_names)
 
 c = db.cursor()
@@ -77,6 +79,7 @@ try:
     for region_id, region_name in c:
         w.writerow([
             region_name,
+            name_by_country[region_name],
             continent_by_country[region_name]
         ] + [data[x].get(region_id) for x in dataset_ids])
 finally:
