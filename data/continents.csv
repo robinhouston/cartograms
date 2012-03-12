@@ -1,8 +1,8 @@
-iso2,name,continent
+iso2,name,continent name,continent index
 BS,Bahamas,North America,4
 CA,Canada,North America,4
 CO,Colombia,South America,5
-KR,Korea, Republic of,Asia,3
+KR,"Korea, Republic of",Asia,3
 BO,Bolivia,South America,5
 MM,Burma,Asia,3
 CG,Congo,Africa,2
@@ -31,7 +31,7 @@ GH,Ghana,Africa,2
 GN,Guinea,Africa,2
 GY,Guyana,South America,5
 IT,Italy,Europe,1
-AQ,Antarctica,7,Antarctica,7
+AQ,Antarctica,Antarctica,7
 ML,Mali,Africa,2
 MA,Morocco,Africa,2
 MU,Mauritius,Africa,2
@@ -68,7 +68,7 @@ AG,Antigua and Barbuda,North America,4
 DZ,Algeria,Africa,2
 AZ,Azerbaijan,Asia,3
 AL,Albania,Europe,1
-AS,North America,4n Samoa,Oceania,6
+AS,American Samoa,Oceania,6
 AR,Argentina,South America,5
 AM,Armenia,Asia,3
 AO,Angola,Africa,2
@@ -118,7 +118,7 @@ FJ,Fiji,Oceania,6
 JO,Jordan,Asia,3
 GF,French Guiana,South America,5
 IO,British Indian Ocean Territory,Asia,3
-FM,Micronesia, Federated States of,Oceania,6
+FM,"Micronesia, Federated States of",Oceania,6
 FR,France,Europe,1
 TV,Tuvalu,Oceania,6
 FK,Falkland Islands (Malvinas),South America,5
@@ -157,7 +157,7 @@ JP,Japan,Asia,3
 JM,Jamaica,North America,4
 KE,Kenya,Africa,2
 KG,Kyrgyzstan,Asia,3
-KP,Korea, Democratic People's Republic of,Asia,3
+KP,"Korea, Democratic People's Republic of",Asia,3
 KI,Kiribati,Oceania,6
 LR,Liberia,Africa,2
 MS,Montserrat,North America,4
