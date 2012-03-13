@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/python2.7
+# We specify 2.7 because the comma extension to the format string language is very useful
 
 """Extract a JSON dictionary from a CSV file.
 """
@@ -15,6 +16,12 @@ parser.add_option("", "--key",
 parser.add_option("", "--value",
                 action="store",
                 help="the column name of the value column")
+parser.add_option("", "--type",
+                action="store", default="unicode",
+                help="the type of the value column (default %default)")
+parser.add_option("", "--format-string",
+                action="store",
+                help="format string for value output")
 
 (options, args) = parser.parse_args(sys.argv[1:])
 if not options.key:
@@ -29,10 +36,20 @@ if not args:
 else:
     csv_file = open(args[0], 'r')
 
+def munge_value(v):
+    v = getattr(__builtins__, options.type)(v)
+    if options.format_string:
+        v = options.format_string.format(v)
+    return v
+
 r = csv.reader(csv_file)
 header = r.next()
 key_index = header.index(options.key)
 value_index = header.index(options.value)
 
-json.dump(dict(( (row[key_index], row[value_index]) for row in r)), sys.stdout)
+d = dict((
+    (row[key_index].decode("utf-8"), munge_value(row[value_index].decode("utf-8")))
+    for row in r
+))
+json.dump(d, sys.stdout)
 
