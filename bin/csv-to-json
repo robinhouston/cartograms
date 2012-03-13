@@ -1,0 +1,38 @@
+#!/usr/bin/python
+
+"""Extract a JSON dictionary from a CSV file.
+"""
+
+import csv
+import json
+import optparse
+import sys
+
+parser = optparse.OptionParser()
+parser.add_option("", "--key",
+                action="store",
+                help="the column name of the key column")
+parser.add_option("", "--value",
+                action="store",
+                help="the column name of the value column")
+
+(options, args) = parser.parse_args(sys.argv[1:])
+if not options.key:
+    parser.error("The --key option must be specified")
+if not options.value:
+    parser.error("The --value option must be specified")
+if len(args) > 1:
+    parser.error("Too many arguments")
+
+if not args:
+    csv_file = sys.stdin
+else:
+    csv_file = open(args[0], 'r')
+
+r = csv.reader(csv_file)
+header = r.next()
+key_index = header.index(options.key)
+value_index = header.index(options.value)
+
+json.dump(dict(( (row[key_index], row[value_index]) for row in r)), sys.stdout)
+
