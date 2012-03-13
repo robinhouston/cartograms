@@ -35,6 +35,7 @@ done
     echo "// Generated at $(date)"
     
     echo 'var carbonmap_data = {};'
+    echo 'var carbonmap_values = {};'
     
     echo -n 'carbonmap_data._raw = '
     bin/as-svg.py --map world-robinson --json --simplification 20000 | perl -pe 's/$/;/'
@@ -53,6 +54,11 @@ done
             echo -n "carbonmap_data.$f._text = \""
             markdown_py -o html5 -s escape -e utf-8 kiln-data/Maps/"$f".text.md | perl -l40pe ''
             echo '";'
+            
+            eval col=\${col_$f}
+            echo -n "carbonmap_values.$f = "
+            bin/csv-to-json --key Alpha-2 --value "$col" --type=float --format="{:,.1f}" kiln-data/Maps/With\ alpha-2/$f.csv
+            echo ';'
         fi
     done
 ) > kiln-output/data.js
