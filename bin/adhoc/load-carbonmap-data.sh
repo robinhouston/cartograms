@@ -2,7 +2,7 @@
 
 set -ex
 
-all_datasets="Area Population GDP  Extraction Emissions Consumption Historical Reserves  PeopleAtRisk SeaLevel Poverty"
+all_datasets="Area Population GDP  Extraction Emissions PetersEmissions Consumption Historical Reserves  PeopleAtRisk SeaLevel Poverty"
 datasets="${1-${all_datasets}}"
 
 col_Area="Land area (sq. km)"
@@ -11,9 +11,10 @@ col_GDP='GDP, PPP (current international $), 2010'
 
 col_Extraction="CO2 from fossil fuels extracted, 2010"
 col_Emissions="CO2 from fossil fuel use (million tonnes, 2009)"
+col_PetersEmissions="CO2 emissions (million tonnes, 2010)"
 col_Consumption="Consumption footprint, million tonnes CO2, 2010"
 col_Historical="Cumulative CO2 emissions from energy, 1850–2007 (million tonnes)"
-col_Reserves="Potential CO2 emissions from proven fossil fuel reserves"
+col_Reserves="Potential CO2 from proven reserves (MT)"
 
 col_PeopleAtRisk="Number of people exposed to droughts, floods, extreme temps"
 col_SeaLevel="Population below 5m"
@@ -39,7 +40,8 @@ done
     bin/as-svg.py --map world-robinson --json --simplification 20000 | perl -pe 's/$/;/'
     
     echo -n 'carbonmap_data._names = '
-    bin/region-names-json world | perl -pe 's/$/;/'
+    bin/csv-to-json --key iso2 --value name data/continents.csv
+    echo ';'
     
     for f in $all_datasets
     do
