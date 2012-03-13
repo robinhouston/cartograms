@@ -35,7 +35,7 @@ class CountryNameEncoder(object):
         input_delimiter=',', output_delimiter=',',
         has_header=True
     ):
-        f = open(csv_file_name, 'r')
+        f = open(csv_file_name, 'rU')
         r = csv.reader(f, delimiter=input_delimiter)
         if not isinstance(write_to, file):
             write_to = open(write_to, 'w')
