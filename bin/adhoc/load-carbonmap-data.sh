@@ -31,13 +31,26 @@ done
 
 (
     echo "// This file is auto-generated. Please do not edit."
+    echo "// Generated at $(date)"
+    
     echo 'var carbonmap_data = {};'
+    
+    echo -n 'carbonmap_data._raw = '
+    bin/as-svg.py --map world-robinson --json --simplification 20000 | perl -pe 's/$/;/'
+    
+    echo -n 'carbonmap_data._names = '
+    bin/region-names-json world | perl -pe 's/$/;/'
+    
     for f in $all_datasets
     do
         if [ -e kiln-data/Maps/Cartogram\ data/"$f".json ]
         then
             echo -n "carbonmap_data.$f = "
             perl -pe 's/$/;/' kiln-data/Maps/Cartogram\ data/"$f".json
+            
+            echo -n "carbonmap_data.$f._text = \""
+            markdown_py -o html5 -s escape -e utf-8 kiln-data/Maps/"$f".text.md | perl -l40pe ''
+            echo '";'
         fi
     done
 ) > kiln-output/data.js
