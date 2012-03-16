@@ -30,3 +30,12 @@ col_EmissionsChange='CO2 emissions (% change 1990-2008)'
         fi
     done
 ) 3> kiln-output/shading.css 4> kiln-output/data.shading.js
+
+(
+    for f in $all_datasets
+    do
+        echo -n "carbonmap_values.$f = "
+        bin/csv-to-json --key Alpha-2 --value "$(bin/csv-header --index=0 kiln-data/Shading/With\ alpha-2/"$f".shading.csv)" --type=float --format="{:,.1f}" kiln-data/Shading/With\ alpha-2/$f.csv
+        echo ';'
+    done
+) >> kiln-output/data.shading.js
