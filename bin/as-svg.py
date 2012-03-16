@@ -2,6 +2,7 @@
 
 import json
 import optparse
+import shlex
 import sys
 
 import shapely.wkb
@@ -46,30 +47,58 @@ class AsSVG(object):
            values="{original};{morphed};{morphed};{original};{original}"/>
       </path>""".format(original=original_path, morphed=morphed_path)
 
+  def _simplification(self):
+      if not hasattr(self, "alternate_simplification_regions"):
+          setattr(self, "alternate_simplification_regions", shlex.split(self.options.alternate_simplification_regions))
+      alternate_simplification = self.options.alternate_simplification
+      
+      def q(x): return unicode(psycopg2.extensions.adapt(x))
+      
+      simplification = q(self.options.simplification)
+      if alternate_simplification:
+          alternate_simplification = q(alternate_simplification)
+          return "CASE name " + "".join([
+            "WHEN {region_name} THEN {alternate_simplification} ".format(
+                region_name=q(region_name),
+                alternate_simplification=alternate_simplification,
+            )
+            for region_name in self.alternate_simplification_regions
+          ]) + "ELSE " + simplification + " END"
+      else:
+          return simplification
+  
   def region_paths(self):
     c = self.db.cursor()
     try:
       if self.options.dataset:
         c.execute("""
           select region.name
-               , ST_AsEWKB(ST_Simplify(ST_Transform(region.the_geom, %s), %s)) g
+               , ST_AsEWKB(ST_Simplify(ST_Transform(region.the_geom, %(srid)s), {simplification})) g
                , exists(
                   select *
                   from data_value
                   join dataset on data_value.dataset_id = dataset.id
-                  where dataset.name = %s
+                  where dataset.name = %(dataset)s
                   and data_value.region_id = region.id) has_data
           from region
-          where region.division_id = %s
-        """, (self.m.srid, self.options.simplification, self.options.dataset, self.m.division_id))
+          where region.division_id = %(division_id)s
+        """.format(simplification=self._simplification()), {
+            "srid": self.m.srid,
+            "simplification": self.options.simplification,
+            "dataset": self.options.dataset,
+            "division_id": self.m.division_id
+        })
       else:
         c.execute("""
           select region.name
-               , ST_AsEWKB(ST_Simplify(ST_Transform(region.the_geom, %s), %s)) g
+               , ST_AsEWKB(ST_Simplify(ST_Transform(region.the_geom, %(srid)s), {simplification})) g
                , false
           from region
-          where region.division_id = %s
-        """, (self.m.srid, self.options.simplification, self.m.division_id))
+          where region.division_id = %(division_id)s
+        """.format(simplification=self._simplification()), {
+            "srid": self.m.srid,
+            "division_id": self.m.division_id
+        })
       
       for region_name, g, has_data in c.fetchall():
         p = shapely.wkb.loads(str(g))
@@ -208,6 +237,13 @@ def main():
   parser.add_option("", "--simplification",
                     action="store", default=1000,
                     help="how much to simplify the paths (default %default)")
+  parser.add_option("", "--alternate-simplification",
+                    action="store", type="int",
+                    help="simplification to use for regions specified by --alternate-simplification-regions")
+  parser.add_option("", "--alternate-simplification-regions",
+                    action="store", default="",
+                    help="regions that use alternate simplification, space-separated (or shell-quoted)")
+  
   parser.add_option("", "--stroke-width",
                     action="store", default=2000, type="int",
                     help="width of SVG strokes (default %default)")

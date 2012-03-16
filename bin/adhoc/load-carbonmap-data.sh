@@ -2,6 +2,8 @@
 
 set -ex
 
+countries_less_simplified="BE NL LU GB SA AE QA OM JP BD BT NP MY VN"
+
 all_datasets="Area Population GDP  Extraction Emissions Consumption Historical Reserves  PeopleAtRisk SeaLevel Poverty"
 datasets="${1-${all_datasets}}"
 
@@ -26,7 +28,7 @@ do
     bin/load-data.py "carbonmap:$f" kiln-data/Maps/With\ alpha-2/$f.csv countries "Alpha-2" "$col"
     bin/density-grid.py "carbonmap:$f" world-robinson > kiln-data/Maps/Cartogram\ data/"$f".density && \
     cart 1500 750 kiln-data/Maps/Cartogram\ data/"$f".density kiln-data/Maps/Cartogram\ data/"$f".cart
-    bin/as-svg.py --dataset "carbonmap:$f" --cart kiln-data/Maps/Cartogram\ data/"$f".cart --map world-robinson --json --simplification 20000 > kiln-data/Maps/Cartogram\ data/$f.json
+    bin/as-svg.py --dataset "carbonmap:$f" --cart kiln-data/Maps/Cartogram\ data/"$f".cart --map world-robinson --json --simplification 20000 --alternate-simplification 5000 --alternate-simplification-regions "$countries_less_simplified" > kiln-data/Maps/Cartogram\ data/$f.json
 done
 
 (
@@ -37,7 +39,12 @@ done
     echo 'var carbonmap_values = {};'
     
     echo -n 'carbonmap_data._raw = '
-    bin/as-svg.py --map world-robinson --json --simplification 20000 | perl -pe 's/$/;/'
+    bin/as-svg.py --map world-robinson --json --simplification 20000 --alternate-simplification 5000 --alternate-simplification-regions "$countries_less_simplified" | perl -pe 's/$/;/'
+    if [ ${PIPESTATUS[0]} -ne 0 ]
+    then
+        exit ${PIPESTATUS[0]}
+    fi
+    
     echo -n 'carbonmap_data._raw._text = "'
     markdown_py -o html5 -s escape -e utf-8 kiln-data/Maps/Reset.text.md | perl -l40pe ''
     echo '";'

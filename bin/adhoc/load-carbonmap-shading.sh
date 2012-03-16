@@ -2,7 +2,7 @@
 
 set -ex
 
-all_datasets="Continents EmissionsChange GDPperCapita PopulationGrowth"
+all_datasets="Continents EmissionsChange CO2perCapita GDPperCapita PopulationGrowth"
 
 col_Continents="Continent index"
 col_EmissionsChange='CO2 emissions (% change 1990-2008)'
