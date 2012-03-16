@@ -4,7 +4,7 @@ set -ex
 
 simplification=20000
 alternate_simplification=10000
-countries_less_simplified="GB CH FR ES AT IT BY UA SK HU RO RS BG SA AE OM IR IQ JP BD IN CN LA BT NP MY VN"
+countries_less_simplified="GB CH FR ES AT IT BY UA SK HU RO RS BG SA AE OM IR IQ JP BD IN CN MN LA BT NP MY VN"
 simplification_json='{"BE": 5000, "NL": 5000, "LU": 5000, "DE": 5000, "CZ": 5000, "PL": 5000, "QA": 5000}'
 
 all_datasets="Area Population GDP  Extraction Emissions Consumption Historical Reserves  PeopleAtRisk SeaLevel Poverty"
@@ -77,7 +77,7 @@ done
             perl -pe 's/$/;/' kiln-data/Maps/Cartogram\ data/"$f".json
             
             echo -n "carbonmap_data.$f._text = \""
-            markdown_py -o html5 -s escape -e utf-8 kiln-data/Maps/"$f".text.md | perl -l40pe ''
+            markdown_py -o html5 -s escape -e utf-8 kiln-data/Maps/"$f".text.md | perl -l40pe 's/"/\\"/g'
             echo '";'
             
             eval col=\${col_$f}
