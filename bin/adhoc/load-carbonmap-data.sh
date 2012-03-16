@@ -2,10 +2,12 @@
 
 set -ex
 
-countries_less_simplified="BE NL LU GB SA AE QA OM JP BD BT NP MY VN"
+simplification=20000
+alternate_simplification=10000
+countries_less_simplified="GB CH FR ES AT IT BY UA SK HU RO RS BG SA AE OM IR IQ JP BD IN CN LA BT NP MY VN"
+simplification_json='{"BE": 5000, "NL": 5000, "LU": 5000, "DE": 5000, "CZ": 5000, "PL": 5000, "QA": 5000}'
 
 all_datasets="Area Population GDP  Extraction Emissions Consumption Historical Reserves  PeopleAtRisk SeaLevel Poverty"
-datasets="${1-${all_datasets}}"
 
 col_Area="Land area (sq. km)"
 col_Population='Population, total, 2010'
@@ -21,14 +23,28 @@ col_PeopleAtRisk="Number of people exposed to droughts, floods, extreme temps"
 col_SeaLevel="Population below 5m"
 col_Poverty='Population living below $1.25 a day'
 
+
+if [ "$1" = "--regenerate" ]
+then
+    shift
+    regenerate=true
+else
+    regenerate=false
+fi
+datasets="${1-${all_datasets}}"
+
+
 for f in $datasets
 do
-    bin/delete-data.py "carbonmap:$f"
-    eval col=\${col_$f}
-    bin/load-data.py "carbonmap:$f" kiln-data/Maps/With\ alpha-2/$f.csv countries "Alpha-2" "$col"
-    bin/density-grid.py "carbonmap:$f" world-robinson > kiln-data/Maps/Cartogram\ data/"$f".density && \
-    cart 1500 750 kiln-data/Maps/Cartogram\ data/"$f".density kiln-data/Maps/Cartogram\ data/"$f".cart
-    bin/as-svg.py --dataset "carbonmap:$f" --cart kiln-data/Maps/Cartogram\ data/"$f".cart --map world-robinson --json --simplification 20000 --alternate-simplification 5000 --alternate-simplification-regions "$countries_less_simplified" > kiln-data/Maps/Cartogram\ data/$f.json
+    if $regenerate
+    then
+        bin/delete-data.py "carbonmap:$f"
+        eval col=\${col_$f}
+        bin/load-data.py "carbonmap:$f" kiln-data/Maps/With\ alpha-2/$f.csv countries "Alpha-2" "$col"
+        bin/density-grid.py "carbonmap:$f" world-robinson > kiln-data/Maps/Cartogram\ data/"$f".density && \
+        cart 1500 750 kiln-data/Maps/Cartogram\ data/"$f".density kiln-data/Maps/Cartogram\ data/"$f".cart
+    fi
+    bin/as-svg.py --dataset "carbonmap:$f" --cart kiln-data/Maps/Cartogram\ data/"$f".cart --map world-robinson --json --simplification "$simplification" --alternate-simplification "$alternate_simplification" --alternate-simplification-regions "$countries_less_simplified" --simplification-json "$simplification_json" > kiln-data/Maps/Cartogram\ data/$f.json
 done
 
 (
@@ -39,7 +55,7 @@ done
     echo 'var carbonmap_values = {};'
     
     echo -n 'carbonmap_data._raw = '
-    bin/as-svg.py --map world-robinson --json --simplification 20000 --alternate-simplification 5000 --alternate-simplification-regions "$countries_less_simplified" | perl -pe 's/$/;/'
+    bin/as-svg.py --map world-robinson --json --simplification "$simplification" --alternate-simplification "$alternate_simplification" --alternate-simplification-regions "$countries_less_simplified" --simplification-json "$simplification_json" | perl -pe 's/$/;/'
     if [ ${PIPESTATUS[0]} -ne 0 ]
     then
         exit ${PIPESTATUS[0]}
@@ -73,3 +89,9 @@ done
 ) > kiln-output/data.js
 
 bin/adhoc/dump-project-data.py carbonmap > kiln-data/dumped.csv
+
+set +x
+echo
+echo "If you need to regenerate the embedded SVG, run:"
+echo "  bin/as-svg.py --map world-robinson --simplification \"$simplification\" --alternate-simplification \"$alternate_simplification\" --alternate-simplification-regions \"$countries_less_simplified\" --simplification-json '$simplification_json'"
+echo
