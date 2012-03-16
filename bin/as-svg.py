@@ -48,24 +48,26 @@ class AsSVG(object):
       </path>""".format(original=original_path, morphed=morphed_path)
 
   def _simplification(self):
-      if not hasattr(self, "alternate_simplification_regions"):
-          setattr(self, "alternate_simplification_regions", shlex.split(self.options.alternate_simplification_regions))
-      alternate_simplification = self.options.alternate_simplification
-      
-      def q(x): return unicode(psycopg2.extensions.adapt(x))
-      
-      simplification = q(self.options.simplification)
-      if alternate_simplification:
-          alternate_simplification = q(alternate_simplification)
-          return "CASE name " + "".join([
-            "WHEN {region_name} THEN {alternate_simplification} ".format(
-                region_name=q(region_name),
-                alternate_simplification=alternate_simplification,
-            )
-            for region_name in self.alternate_simplification_regions
-          ]) + "ELSE " + simplification + " END"
-      else:
-          return simplification
+    if not hasattr(self, "simplification_dict"):
+      setattr(self, "simplification_dict", {})
+      for region_name in shlex.split(self.options.alternate_simplification_regions):
+        self.simplification_dict[region_name] = self.options.alternate_simplification
+      if self.options.simplification_json is not None:
+        self.simplification_dict.update(json.loads(self.options.simplification_json))
+    
+    def q(x): return unicode(psycopg2.extensions.adapt(x))
+    
+    if self.simplification_dict:
+      return "CASE name " + "".join([
+        "WHEN {region_name} THEN {alternate_simplification} ".format(
+          region_name=q(region_name),
+          alternate_simplification=q(alternate_simplification),
+        )
+        for region_name, alternate_simplification
+        in self.simplification_dict.items()
+      ]) + "ELSE " + q(self.options.simplification) + " END"
+    else:
+      return q(self.options.simplification)
   
   def region_paths(self):
     c = self.db.cursor()
@@ -243,6 +245,9 @@ def main():
   parser.add_option("", "--alternate-simplification-regions",
                     action="store", default="",
                     help="regions that use alternate simplification, space-separated (or shell-quoted)")
+  parser.add_option("", "--simplification-json",
+                    action="store",
+                    help="A JSON-encoded dict of region name => simplification")
   
   parser.add_option("", "--stroke-width",
                     action="store", default=2000, type="int",
