@@ -1,0 +1,28 @@
+#!/usr/bin/python
+
+"""Extract a header field from a CSV file.
+"""
+
+import csv
+import optparse
+import sys
+
+parser = optparse.OptionParser()
+parser.add_option("", "--index",
+                action="store", type="int",
+                help="the column number to extract")
+
+(options, args) = parser.parse_args(sys.argv[1:])
+if options.index is None:
+    parser.error("The --index option must be specified")
+if len(args) > 1:
+    parser.error("Too many arguments")
+
+if not args:
+    csv_file = sys.stdin
+else:
+    csv_file = open(args[0], 'r')
+
+r = csv.reader(csv_file)
+header = r.next()
+print header[options.index]
