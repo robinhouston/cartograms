@@ -1,3 +1,6 @@
 [submodule "svgtopng"]
 	path = svgtopng
 	url = ./svgtopng
+[submodule "carbonmap"]
+	path = carbonmap
+	url = git@github.com:kiln/carbonmap.org.git
