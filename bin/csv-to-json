@@ -10,6 +10,9 @@ import optparse
 import sys
 
 parser = optparse.OptionParser()
+parser.add_option("", "--rank",
+                action="store_true",
+                help="output the ranks rather than the values")
 parser.add_option("", "--key",
                 action="store",
                 help="the column name of the key column")
@@ -47,9 +50,17 @@ header = r.next()
 key_index = header.index(options.key)
 value_index = header.index(options.value)
 
-d = dict((
+rows = ((
     (row[key_index].decode("utf-8"), munge_value(row[value_index].decode("utf-8")))
     for row in r
 ))
+if options.rank:
+    d = dict((
+        (key, index+1)
+        for index, (key, value) in enumerate(sorted(rows, key=lambda (key, value): value))
+    ))
+else:
+    d = dict(rows)
+
 json.dump(d, sys.stdout)
 
