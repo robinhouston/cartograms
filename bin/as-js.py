@@ -26,6 +26,11 @@ class AsJSON(object):
       self.out = open(options.output, 'w')
     else:
       self.out = sys.stdout
+    
+    if self.options.simplification_json:
+      self.simplification_dict = json.loads(self.options.simplification_json)
+    else:
+      self.simplification_dict = {}
   
   @staticmethod
   def _extract_cart_name(cart):
@@ -140,7 +145,7 @@ class AsJSON(object):
     
     for region_name, p, breakpoints in self.region_paths():
       print >>sys.stderr, "Extracting paths for {region_name}...".format(region_name=region_name)
-      for k, path in self.multipolygon_as_svg(p, breakpoints).items():
+      for k, path in self.multipolygon_as_svg(p, breakpoints, region_name).items():
         if self.options.include_segments:
           self.segments = []
         
@@ -201,19 +206,21 @@ class AsJSON(object):
     else:
       return 1
   
-  def _simplify(self, coords, breakpoints):
+  def _simplify(self, coords, breakpoints, region_name):
+    simplification = self.simplification_dict.get(region_name, self.options.simplification)
+    
     prev = None
     for segment in self._segments(coords, breakpoints):
       ls = LineString(segment)
-      ls = ls.simplify(tolerance=self.options.simplification / self._max_stretch(segment), preserve_topology=False)
+      ls = ls.simplify(tolerance=simplification / self._max_stretch(segment), preserve_topology=False)
       
       for coord in ls.coords:
         if coord != prev:
           yield coord
         prev = coord
   
-  def polygon_ring_as_svg(self, ring, breakpoints, path_arrs):
-    coords = list(self._simplify(ring.coords, breakpoints))
+  def polygon_ring_as_svg(self, ring, breakpoints, path_arrs, region_name):
+    coords = list(self._simplify(ring.coords, breakpoints, region_name))
     for k, path_arr in path_arrs.items():
       path_arr.append("M")
       first = True
@@ -239,14 +246,14 @@ class AsJSON(object):
         path_arr[-5:] = []
         return
 
-  def multipolygon_as_svg(self, multipolygon, breakpoints):
+  def multipolygon_as_svg(self, multipolygon, breakpoints, region_name):
     path_arrs = dict((
       (k, []) for k in self.interpolators.keys()
     ))
     for g in multipolygon.geoms:
-      self.polygon_ring_as_svg(g.exterior, breakpoints, path_arrs)
+      self.polygon_ring_as_svg(g.exterior, breakpoints, path_arrs, region_name)
       for interior in g.interiors:
-        self.polygon_ring_as_svg(interior, breakpoints, path_arrs)
+        self.polygon_ring_as_svg(interior, breakpoints, path_arrs, region_name)
   
     return dict((
       (k, " ".join(path_arr))
@@ -266,9 +273,13 @@ def main():
   parser.add_option("", "--output-grid",
                     action="store",
                     help="the output grid, in the form <width>x<height>")
+  
   parser.add_option("", "--simplification",
                     action="store", default=20000, type="int",
                     help="how much to simplify the paths (default %default)")
+  parser.add_option("", "--simplification-json",
+                    action="store",
+                    help="A JSON-encoded dict of region name => simplification")
   
   parser.add_option("", "--data-var",
                     action="store",
