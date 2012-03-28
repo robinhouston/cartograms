@@ -2,7 +2,7 @@ iso2,name,continent name,continent index
 BS,Bahamas,North America,4
 CA,Canada,North America,4
 CO,Colombia,South America,5
-KR,"Korea, Republic of",Asia,3
+KR,South Korea,Asia,3
 BO,Bolivia,South America,5
 MM,Burma,Asia,3
 CG,Congo,Africa,2
@@ -59,7 +59,7 @@ VE,Venezuela,South America,5
 BH,Bahrain,Asia,3
 SM,San Marino,Europe,1
 RS,Serbia,Europe,1
-VA,Holy See (Vatican City),Europe,1
+VA,Vatican City,Europe,1
 SJ,Svalbard,Europe,1
 BB,Barbados,North America,4
 BM,Bermuda,North America,4
@@ -102,7 +102,7 @@ KY,Cayman Islands,North America,4
 CR,Costa Rica,North America,4
 CF,Central African Republic,Africa,2
 CU,Cuba,North America,4
-UM,United States Minor Outlying Islands,Oceania,6
+UM,US Minor Outlying Islands,Oceania,6
 CY,Cyprus,Asia,3
 NO,Norway,Europe,1
 NP,Nepal,Asia,3
@@ -118,16 +118,16 @@ FJ,Fiji,Oceania,6
 JO,Jordan,Asia,3
 GF,French Guiana,South America,5
 IO,British Indian Ocean Territory,Asia,3
-FM,"Micronesia, Federated States of",Oceania,6
+FM,Micronesia,Oceania,6
 FR,France,Europe,1
 TV,Tuvalu,Oceania,6
-FK,Falkland Islands (Malvinas),South America,5
+FK,Falkland Islands,South America,5
 TM,Turkmenistan,Asia,3
-TZ,United Republic of Tanzania,Africa,2
+TZ,Tanzania,Africa,2
 KW,Kuwait,Asia,3
 KZ,Kazakhstan,Asia,3
-LA,Lao People's Democratic Republic,Asia,3
-MK,The former Yugoslav Republic of Macedonia,Europe,1
+LA,Laos,Asia,3
+MK,Macedonia,Europe,1
 GM,Gambia,Africa,2
 GA,Gabon,Africa,2
 LB,Lebanon,Asia,3
@@ -148,7 +148,7 @@ HR,Croatia,Europe,1
 HU,Hungary,Europe,1
 IS,Iceland,Europe,1
 IN,India,Asia,3
-IR,Iran (Islamic Republic of),Asia,3
+IR,Iran,Asia,3
 NF,Norfolk Island,Oceania,6
 IL,Israel,Asia,3
 CI,Cote d'Ivoire,Africa,2
@@ -157,14 +157,14 @@ JP,Japan,Asia,3
 JM,Jamaica,North America,4
 KE,Kenya,Africa,2
 KG,Kyrgyzstan,Asia,3
-KP,"Korea, Democratic People's Republic of",Asia,3
+KP,North Korea,Asia,3
 KI,Kiribati,Oceania,6
 LR,Liberia,Africa,2
 MS,Montserrat,North America,4
 CC,Cocos (Keeling) Islands,Asia,3
 SK,Slovakia,Europe,1
 LI,Liechtenstein,Europe,1
-LY,Libyan Arab Jamahiriya,Africa,2
+LY,Libya,Africa,2
 MG,Madagascar,Africa,2
 MQ,Martinique,North America,4
 MN,Mongolia,Asia,3
@@ -188,7 +188,7 @@ PE,Peru,South America,5
 PK,Pakistan,Asia,3
 PL,Poland,Europe,1
 PA,Panama,North America,4
-MD,Republic of Moldova,Europe,1
+MD,Moldova,Europe,1
 PH,Philippines,Asia,3
 RW,Rwanda,Africa,2
 SA,Saudi Arabia,Asia,3
@@ -205,17 +205,17 @@ ES,Spain,Europe,1
 LC,Saint Lucia,North America,4
 SD,Sudan,Africa,2
 SE,Sweden,Europe,1
-SY,Syrian Arab Republic,Asia,3
+SY,Syria,Asia,3
 CH,Switzerland,Europe,1
 VG,British Virgin Islands,North America,4
-VN,Viet Nam,Asia,3
+VN,Vietnam,Asia,3
 TT,Trinidad and Tobago,North America,4
 TK,Tokelau,Oceania,6
 TO,Tonga,Oceania,6
 TG,Togo,Africa,2
 ST,Sao Tome and Principe,Africa,2
 PM,Saint Pierre and Miquelon,North America,4
-VI,United States Virgin Islands,North America,4
+VI,US Virgin Islands,North America,4
 NA,Namibia,Africa,2
 WF,Wallis and Futuna Islands,Oceania,6
 WS,Samoa,Oceania,6
