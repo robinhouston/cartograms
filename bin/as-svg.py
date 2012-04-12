@@ -323,7 +323,7 @@ def main():
   
   (options, args) = parser.parse_args()
   if args:
-    parser.error("Unexpected non-option arguments")
+    parser.error("Unexpected non-option arguments: %r" % (args,))
   
   if not options.map:
     parser.error("Missing option --map")
