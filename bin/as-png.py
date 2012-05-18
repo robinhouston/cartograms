@@ -7,6 +7,7 @@ import optparse
 import sys
 
 import cairo
+import PIL.Image, PIL.ImageDraw
 import shapely.wkb
 import psycopg2
 
@@ -15,6 +16,11 @@ import utils
 FILL_COLOUR = (0xf7 / 0xff, 0xd3 / 0xff, 0xaa / 0xff)
 FILL_COLOUR_NO_DATA = (1, 1, 1)
 STROKE_COLOUR = (0xa0 / 0xff, 0x80 / 0xff, 0x70 / 0xff)
+
+##
+FILL_COLOUR = FILL_COLOUR_NO_DATA = None
+STROKE_COLOUR = (0x33, 0x33, 0x33)
+##
 
 CIRCLE_FILL_COLOUR = (1, 0, 0)
 
@@ -74,28 +80,45 @@ class AsPNG(object):
     finally:
       c.close()
 
-  def render_polygon_ring(self, ring, fill_colour=FILL_COLOUR, slide=1.0):
-      poly_arr = ["M"]
-      first = True
-      for x, y in ring.coords:
-        if self.interpolator:
-          x, y = self.interpolator(x, y, slide)
-        if first:
-          self.c.move_to(x, y)
-          first = False
-        else:
-          self.c.line_to(x, y)
-      
-      self.c.close_path()
-      if FILL_COLOUR:
-        self.c.set_source_rgb(*fill_colour)
-        if STROKE_COLOUR:
-          self.c.fill_preserve()
-        else:
-          self.c.fill()
+  def render_polygon_ring_cairo(self, ring, fill_colour=FILL_COLOUR, slide=1.0):
+    first = True
+    for x, y in ring.coords:
+      if self.interpolator:
+        x, y = self.interpolator(x, y, slide)
+      if first:
+        self.c.move_to(x, y)
+        first = False
+      else:
+        self.c.line_to(x, y)
+    
+    self.c.close_path()
+    if fill_colour:
+      self.c.set_source_rgb(*fill_colour)
       if STROKE_COLOUR:
-        self.c.set_source_rgb(*STROKE_COLOUR)
-        self.c.stroke()
+        self.c.fill_preserve()
+      else:
+        self.c.fill()
+    if STROKE_COLOUR:
+      self.c.set_source_rgb(*STROKE_COLOUR)
+      self.c.stroke()
+
+  def render_polygon_ring_pil(self, ring, fill_colour=FILL_COLOUR, slide=1.0):
+    polygon_coords = []
+    for x, y in ring.coords:
+      if self.interpolator:
+        x, y = self.interpolator(x, y, slide)
+      polygon_coords.append((
+        (x - self.m.x_min) * self.m.width / (self.m.x_max - self.m.x_min),
+        self.m.height - (y - self.m.y_min) * self.m.height / (self.m.y_max - self.m.y_min),
+      ))
+      
+    self.draw.polygon(polygon_coords, outline=STROKE_COLOUR, fill=fill_colour)
+
+  def render_polygon_ring(self, *args, **kwargs):
+      if self.options.cairo:
+          self.render_polygon_ring_cairo(*args, **kwargs)
+      else:
+          self.render_polygon_ring_pil(*args, **kwargs)
 
   def render_polygon(self, polygon, fill_colour=FILL_COLOUR, slide=1.0):
     for ring in polygon.exterior:
@@ -109,7 +132,7 @@ class AsPNG(object):
       for interior in g.interiors:
         self.render_polygon_ring(interior, fill_colour, slide)
   
-  def render_circles(self, slide=1.0):
+  def render_circles_cairo(self, slide=1.0):
     c = self.db.cursor()
     c.execute("""
       with t as (select ST_Transform(location, %s) p from {table_name})
@@ -125,6 +148,11 @@ class AsPNG(object):
         self.c.fill()
     c.close()
 
+  def render_circles(self, *args, **kwargs):
+    if self.options.cairo:
+      self.render_circles_cairo(*args, **kwargs)
+    else:
+      raise Exception("Circles are not yet implemented in PIL mode")
   
   def render_map(self):
     if self.options.anim_frames:
@@ -135,7 +163,7 @@ class AsPNG(object):
     else:
       self.render_frame(1.0, self.out)
   
-  def render_frame(self, slide, output_file):
+  def render_frame_cairo(self, slide, output_file):
     surface = cairo.ImageSurface(cairo.FORMAT_RGB24, self.m.width, self.m.height)
     self.c = cairo.Context(surface)
     
@@ -157,6 +185,26 @@ class AsPNG(object):
 
     surface.write_to_png(output_file)
     surface.finish()
+
+  def render_frame_pil(self, slide, output_file):
+    if self.options.overlay_on:
+      image = PIL.Image.open(self.options.overlay_on)
+    else:
+      image = PIL.Image.new("RGB", (self.m.width, self.m.height), None)
+    
+    self.draw = PIL.ImageDraw.Draw(image)
+    
+    self.render_region_paths(slide)
+    if self.options.circles:
+      self.render_circles(slide)
+    
+    image.save(output_file, "PNG")
+
+  def render_frame(self, *args, **kwargs):
+      if self.options.cairo:
+          self.render_frame_cairo(*args, **kwargs)
+      else:
+          self.render_frame_pil(*args, **kwargs)
 
 def main():
   global options
@@ -195,6 +243,16 @@ def main():
   parser.add_option("", "--circle-opacity",
                     action="store", default=0.1, type="float",
                     help="opacity of circles (default %default)")
+
+  parser.add_option("", "--cairo",
+                    action="store_true", default=True,
+                    help="use Cairo")
+  parser.add_option("", "--pil",
+                    action="store_false", dest="cairo",
+                    help="use PIL")
+  parser.add_option("", "--overlay-on",
+                    action="store",
+                    help="overlay the paths on the specified background image")
   
   (options, args) = parser.parse_args()
   if args:
