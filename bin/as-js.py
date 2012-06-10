@@ -193,7 +193,7 @@ class AsJSON(object):
   
   def _max_stretch(self, segment):
     l = self._segment_length(segment)
-    if l == 0:
+    if l == 0 or self.interpolators.keys() == ["_raw"]:
       return 1
     
     max_stretch = max([
