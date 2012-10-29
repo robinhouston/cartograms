@@ -1,4 +1,7 @@
-Cartogram generation code
+**Note**: This repository is superceded by [The Kiln version](/kiln/cartograms).
+
+
+# Cartogram generation code
 
 How to get started:
 
