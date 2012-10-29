@@ -1,4 +1,4 @@
-**Note**: This repository is superceded by [The Kiln version](/kiln/cartograms).
+**Note**: This repository is superseded by [The Kiln version](/kiln/cartograms).
 
 
 # Cartogram generation code
